@@ -52,6 +52,7 @@ void *arenasbrk(intptr_t increment, arenaheader *ahdr)
 
 static inline void* sbrk_wrap(intptr_t increment, arenaheader *dummy)
 {
+    UNUSED(dummy);
     return sbrk(increment);
 }
 
@@ -71,7 +72,7 @@ void do_split(blockheader *bhdr, size_t bhdr_payload_size)
     blockheader *bhdr_new = (blockheader *)
         ((uintptr_t)bhdr + AL_BLOCKHDR_SIZE + bhdr_payload_size);
 
-    /*  We update thebh splitted block header.    */
+    /*  We update the splitted block header.    */
     bhdr->payload_size = bhdr_payload_size;
     bhdr->bhdr_next = bhdr_new;
 
@@ -179,7 +180,7 @@ void *dmalloc(size_t size, void *arena)
 
     /*  We must guarantee memory alignment to ensure defined behaviour
         according to the C standard.    */
-    size_t aligned_size = ALIGNTO(size, max_align_t);
+    size_t aligned_size = ALIGN(size);
     
     if(aligned_size < size || aligned_size > SIZE_MAX - AL_BLOCKHDR_SIZE)
     {
@@ -198,7 +199,6 @@ void *dmalloc(size_t size, void *arena)
         enough payload size for reusage.    */
 
     blockheader *bhdr_start = ahdr->bhdr_first;
-    blockheader *brk        = ahdr->arena_brk; 
     blockheader *bhdr_curr  = bhdr_start;
     blockheader *bhdr_last  = NULL;                   
 
@@ -433,7 +433,7 @@ void *drealloc(void *payload, size_t size, void *dest, void *src)
         block, based on the resizing request and its position in the block 
         list. We'll see them after setting the stage. */
 
-    size_t al_size = ALIGNTO(size, max_align_t);
+    size_t al_size = ALIGN(size);
 
     /*  Aligning the payload new size may increase its value, so we must 
     prevent a possible overflow.    */

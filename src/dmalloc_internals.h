@@ -24,6 +24,10 @@
 #include <stddef.h>
 #include <unistd.h>
 
+#define UNUSED(param) (void)(param)
+
+
+
 typedef struct blockheader
 {
     size_t              payload_size;
@@ -53,17 +57,18 @@ void do_split(blockheader *bhdr, size_t bhdr_payload_size);
 
 blockheader *do_coalesce_right(blockheader *bhdr);
 
-#define ALIGNTO(val, type) (((val) + alignof(type) - 1) & ~(alignof(type) - 1))
+#define ALIGN(val)  \
+    (((val) + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1))
 
-#define AL_ARENAHDR_SIZE ALIGNTO(sizeof(arenaheader), max_align_t)
+#define AL_ARENAHDR_SIZE ALIGN(sizeof(arenaheader))
 
-#define AL_BLOCKHDR_SIZE ALIGNTO(sizeof(blockheader), max_align_t)
+#define AL_BLOCKHDR_SIZE ALIGN(sizeof(blockheader))
 
-#define GET_ARENAHDR(addr) (arenaheader *)ALIGNTO(addr, arenaheader)
+#define GET_ARENAHDR(ptr) (arenaheader *)ALIGN((uintptr_t)ptr)
 
-#define GET_BLOCKHDR(payld_addr) (blockheader *)(payld_addr - AL_BLOCKHDR_SIZE)
+#define GET_BLOCKHDR(ptr) (blockheader *)((uintptr_t)ptr - AL_BLOCKHDR_SIZE)
 
-#define MIN_BLOCK_SIZE (AL_BLOCKHDR_SIZE + ALIGNTO(1, max_align_t))
+#define MIN_BLOCK_SIZE (AL_BLOCKHDR_SIZE + ALIGN(sizeof(char)))
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
