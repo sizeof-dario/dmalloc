@@ -4,7 +4,45 @@ project(dmalloc C)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -pedantic")
 
+# option(ENABLE_DFREE_PEDANTIC "Enable pointer validation in dfree()" OFF)
+option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
+
 add_library(dmalloc)
+
+#if(ENABLE_DFREE_PEDANTIC)
+#    message("DFREE_PEDANTIC is enabled! You can disable it with -DENABLE_DFREE_PEDANTIC=OFF.")
+#    target_compile_definitions(dmalloc PUBLIC DFREE_PEDANTIC=1)
+#else()
+#    message("DFREE_PEDANTIC is disabled! You can enable it with -DENABLE_DFREE_PEDANTIC=ON.")
+#endif()
+
+if(ENABLE_COVERAGE)
+    message("ENABLE_COVERAGE is enabled! You can disable it with -DENABLE_COVERAGE=OFF.")
+
+    # Add extra compiation flags to dmalloc.
+    # --coverage: Enables converage tracking (.gcno files).
+    #        -O0: Disables optimization.
+    #         -g: Adds debug symbols used to link the coverage data to the code lines.
+    target_compile_options(dmalloc PRIVATE --coverage -O0 -g)
+    
+    # Tells the linker to include the gcov library.
+    target_link_options(dmalloc PUBLIC --coverage)
+
+
+    find_program(LCOV_PATH lcov)
+    find_program(GENHTML_PATH genhtml)
+
+    if(LCOV_PATH AND GENHTML_PATH)
+        add_custom_target(coverage
+            COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info --rc branch_coverage=1
+            COMMAND ${GENHTML_PATH} coverage.info --output-directory ./coverage_report --rc branch_coverage=1
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    endif()
+else()
+    message("ENABLE_COVERAGE is disabled! You can enable it with -DENABLE_COVERAGE=ON.")
+endif()
+
+
 
 target_sources(dmalloc
     PRIVATE src/dmalloc.c

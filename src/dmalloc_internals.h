@@ -22,9 +22,15 @@
 #include <stdint.h>
 #include <stdalign.h>
 #include <stddef.h>
+#include <string.h>
 #include <unistd.h>
 
+/*  General purpose macros. */
+
 #define UNUSED(param) (void)(param)
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+/*  *********************** */
 
 
 
@@ -49,9 +55,38 @@ typedef struct arenaheader
 
 
 
-void *arenasbrk(intptr_t increment, arenaheader *self);
-
+/*  #### DESCRIPTION
+    `heapinit()` initializes the heap as an arena.
+    #### RETURN VALUE
+    On success, returns `0`.
+    On failure, returns `-1` with `errno` set.
+    #### ERRORS
+    -   `ENOMEM`
+        Out of memory. `heapinit()` called `sbrk()` that failed.  
+*/
 int heapinit();
+
+
+
+/*  #### DESCRIPTION
+    `arenasbrk()` increases or decreases of `delta` bytes the break of the
+    arena pointed to by `ahdr`.
+    #### RETURN VALUE
+    On success, returns the old arena break.
+    On failure, returns `(void *)(-1)` and sets `errno`.
+    #### ERRORS
+    -   `EINVAL`
+        Invalid argument. The function received `NULL` as the value for `ahdr`.
+    -   `EOVERFLOW`
+        Value too large for defined data type. `delta` was too big in modulus.
+    -   `ERANGE`
+        Result too large. The shift would cause the break to point somewhere
+        outside the arena.
+    #### NOTES
+    `arenasbrk(0, ahdr)` can be used to obtain the current break value. */
+void *arenasbrk(intptr_t delta, arenaheader *ahdr);
+
+
 
 void do_split(blockheader *bhdr, size_t bhdr_payload_size);
 
@@ -70,6 +105,6 @@ blockheader *do_coalesce_right(blockheader *bhdr);
 
 #define MIN_BLOCK_SIZE (AL_BLOCKHDR_SIZE + ALIGN(sizeof(char)))
 
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 
 #endif /* DMALLOC_INTERNALS_H */

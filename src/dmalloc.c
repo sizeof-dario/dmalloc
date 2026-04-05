@@ -6,14 +6,57 @@
 
 ******************************************************************************/
 
+/* TODO: drealloc() is a bit nasty it he reallocation of a block, when it must 
+    be shrunk and it's at the end of th list. A more clean way to do it should 
+    be found. */
+
 #include "dmalloc_internals.h"
 #include "dmalloc.h"
+
+#include "stdio.h"
 
 static void *heap_start = NULL;
 
 
 
-void *arenasbrk(intptr_t increment, arenaheader *ahdr)
+/*  LCOV_EXCL_      START. */
+
+static inline void* sbrk_wrap(intptr_t delta, arenaheader *dummy)
+{
+    UNUSED(dummy);
+    return sbrk(delta);
+}
+
+
+
+int heapinit()
+{
+
+    arenaheader *hhdr = GET_ARENAHDR(heap_start);
+    ptrdiff_t padding = (uintptr_t)hhdr - (uintptr_t)heap_start;
+
+    if(sbrk(padding + AL_ARENAHDR_SIZE) == (void *)(-1))
+    {
+        return -1;
+    }
+
+    /*  WE can think of the heap as backing memory of SIZE_MAX capacity. That's
+        way past the real limit, but it allows us to unify the code. */
+
+    hhdr->arena_start    = (void *)((uintptr_t)hhdr + AL_ARENAHDR_SIZE);
+    hhdr->arena_brk      = hhdr->arena_start;
+    hhdr->arena_end      = (void *)((uintptr_t)hhdr->arena_start + SIZE_MAX);
+    hhdr->bhdr_first     = NULL;
+    hhdr->brkshifter     = sbrk_wrap;
+
+    return 0;
+}
+
+/*  LCOV_EXCL_      STOP. */
+
+
+
+void *arenasbrk(intptr_t delta, arenaheader *ahdr)
 {
     if(ahdr == NULL)
     {
@@ -21,39 +64,63 @@ void *arenasbrk(intptr_t increment, arenaheader *ahdr)
         return (void *)(-1);
     }
 
-    if(increment == 0)
+    uintptr_t old_brk = (uintptr_t)ahdr->arena_brk;
+
+    if(delta == 0)
     {
-        return ahdr->arena_brk;
+        return (void *)old_brk;
     }
 
-    intptr_t shifted_brk = (intptr_t)ahdr->arena_brk + increment;
+    uintptr_t new_brk = delta > 0 
+                    ? old_brk + (uintptr_t)( delta) 
+                    : old_brk - (uintptr_t)(-delta);
 
-    if((increment < 0 && shifted_brk >= (intptr_t)ahdr->arena_brk)
-    || (increment > 0 && shifted_brk <= (intptr_t)ahdr->arena_brk))
+    if (delta > 0 ? new_brk <= old_brk : new_brk >= old_brk)
     {
         errno = EOVERFLOW;
         return (void *)(-1);
     }
 
-    if(shifted_brk < (intptr_t)ahdr->arena_start
-    || shifted_brk > (intptr_t)ahdr->arena_end)
+    if(new_brk < (uintptr_t)ahdr->arena_start 
+    || new_brk > (uintptr_t)ahdr->arena_end)
     {
         errno = ERANGE;
         return (void *)(-1);
     }
 
-    void *old_brk = ahdr->arena_brk;
-    ahdr->arena_brk = (void *)shifted_brk;
+    ahdr->arena_brk = (void *)new_brk;
 
-    return old_brk;
+    return (void *)old_brk;
 }
 
 
 
-static inline void* sbrk_wrap(intptr_t increment, arenaheader *dummy)
+int arenainit(void *backing_memory, size_t capacity)
 {
-    UNUSED(dummy);
-    return sbrk(increment);
+    if(backing_memory == NULL)
+    {
+        return 0;
+    }
+
+    arenaheader *ahdr = GET_ARENAHDR(backing_memory);
+
+    ptrdiff_t padding = (uintptr_t)ahdr - (uintptr_t)backing_memory;
+
+    if(padding + AL_ARENAHDR_SIZE > capacity)
+    {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    capacity -= padding + AL_ARENAHDR_SIZE;
+
+    ahdr->arena_start    = (void *)((uintptr_t)ahdr + AL_ARENAHDR_SIZE);
+    ahdr->arena_brk      = ahdr->arena_start;
+    ahdr->arena_end      = (void *)((uintptr_t)ahdr->arena_start + capacity);
+    ahdr->bhdr_first     = NULL;
+    ahdr->brkshifter     = arenasbrk;
+
+    return 0;
 }
 
 
@@ -84,10 +151,16 @@ void do_split(blockheader *bhdr, size_t bhdr_payload_size)
     bhdr_new->bhdr_next = bhdr_next_old;
 
     /*  We update the header of the block that next to the new one. */
+    
+    /*  The branch is always taken due to dfree() always lowering the break 
+        when the last block in list is freed.   */
+    /*  LCOV_EXCL_      START. */
     if(bhdr_next_old != NULL)
     {
         bhdr_next_old->bhdr_prev = bhdr_new;
     }
+    /*  LCOV_EXCL_      STOP. */
+
 }
 
 
@@ -105,63 +178,11 @@ static inline void try_split(blockheader *bhdr, size_t bhdr_payload_size)
 
 
 
-int arenainit(void *buffer, size_t size)
-{
-    if(buffer == NULL || size == 0)
-    {
-        errno = EINVAL;
-        return -1;
-    }
-
-    arenaheader *hdr = GET_ARENAHDR((uintptr_t)buffer);
-
-    ptrdiff_t padding = (uintptr_t)hdr - (uintptr_t)buffer;
-
-    if(padding + AL_ARENAHDR_SIZE > size)
-    {
-        errno = ENOMEM;
-        return -1;
-    }
-
-    size_t capacity = size - padding - AL_ARENAHDR_SIZE;
-
-    hdr->arena_start    = (void *)((uintptr_t)hdr + AL_ARENAHDR_SIZE);
-    hdr->arena_brk      = hdr->arena_start;
-    hdr->arena_end      = (void *)((uintptr_t)hdr->arena_start + capacity);
-    hdr->bhdr_first     = NULL;
-    hdr->brkshifter     = arenasbrk;
-
-    return 0;
-}
-
-
-
-int heapinit()
-{
-    arenaheader *hdr = GET_ARENAHDR((uintptr_t)heap_start);
-    ptrdiff_t padding = (uintptr_t)hdr - (uintptr_t)heap_start;
-
-    if(sbrk(padding + AL_ARENAHDR_SIZE) == (void *)(-1))
-    {
-        return -1;
-    }
-
-    hdr->arena_start    = (void *)((uintptr_t)hdr + AL_ARENAHDR_SIZE);
-    hdr->arena_brk      = hdr->arena_start;
-    hdr->arena_end      = (void *)((uintptr_t)hdr->arena_start + SIZE_MAX);
-    hdr->bhdr_first     = NULL;
-    hdr->brkshifter     = sbrk_wrap;
-
-    return 0;
-}
-
-
-
 void *dmalloc(size_t size, void *arena)
 {
-    /*  Upon first call, we shall retrieve the heap starting address value and
-        initalize the heap. */
-    if(heap_start == NULL)
+    /*  LCOV_       EXCL_START. */
+
+    if(arena == NULL && heap_start == NULL)
     {
         heap_start = sbrk(0);
         if(heapinit() < 0)
@@ -176,37 +197,30 @@ void *dmalloc(size_t size, void *arena)
         arena = heap_start;
     }
 
-    arenaheader *ahdr = GET_ARENAHDR((uintptr_t)arena); 
-
-    /*  We must guarantee memory alignment to ensure defined behaviour
-        according to the C standard.    */
-    size_t aligned_size = ALIGN(size);
-    
-    if(aligned_size < size || aligned_size > SIZE_MAX - AL_BLOCKHDR_SIZE)
-    {
-        errno = ENOMEM;
-        return NULL;
-    }
-
-    size = aligned_size;
+    /*  LCOV_EXCL_      STOP. */
 
 
 
 
 
-    /*  To allocate the memory, we first assume some allocated blocks already
-        exist; thus, we traverse their list to try finding a block with a big
-        enough payload size for reusage.    */
+    arenaheader *ahdr = GET_ARENAHDR(arena); 
+
+    size = ALIGN(size);
+
+
+
+
+
+    /*  To allocate the memory, we first assume some free allocated blocks 
+        already exist; thus, we traverse their list to try finding one with a 
+        big enough payload size for reusage. */
 
     blockheader *bhdr_start = ahdr->bhdr_first;
     blockheader *bhdr_curr  = bhdr_start;
     blockheader *bhdr_last  = NULL;                   
 
-    /*  The first condition checks if there are no blocks in the heap;
-        The second ones tells if we reached the end of the list.        */
     while(bhdr_start != NULL && bhdr_curr != NULL)
     {
-        /*  We want to find a big enough block that is free.    */
         if(bhdr_curr->is_free == 1 && (bhdr_curr->payload_size >= size))
         {
             bhdr_curr->is_free = 0;
@@ -225,7 +239,7 @@ void *dmalloc(size_t size, void *arena)
     }
 
     /*  If we weren't able to find a suitable block, or if there were no blocks
-        to begin with, we need to raise the break and we create a new block. */
+        to begin with, we need to raise the break and create a new block. */
     blockheader *p = ahdr->brkshifter(size + AL_BLOCKHDR_SIZE, ahdr);
     
     if(p == (void *)(-1))
@@ -256,24 +270,22 @@ void *dmalloc(size_t size, void *arena)
 
 blockheader *do_coalesce_right(blockheader *bhdr)
 {
-    /*  We update the payload size making sure to also include the extra header
-        space.  */
     bhdr->payload_size += (AL_BLOCKHDR_SIZE + bhdr->bhdr_next->payload_size);
 
-    /*  We update the hdr_next pointer in the block we are performing right
-        coalescing on.  */
     bhdr->bhdr_next = bhdr->bhdr_next->bhdr_next;
     
     /*  We update the bhdr_prev pointer in the block on the right. Note that we
         must work on bhdr->bhdr_next and not bhdr->bhdr_next->bhdr_next now 
         because of the previous reassigment.    */
+    /*  The branch is always taken due to dfree() always lowering the break 
+        when the last block in list is freed.   */
+    /*  LCOV_EXCL_      START. */
     if(bhdr->bhdr_next != NULL)
     {
         bhdr->bhdr_next->bhdr_prev = bhdr;
     }
-    
-    /*  We return the header pointer passed to the function. It's not really
-        necessary, but I thinks it renders these functions more uniform.    */
+    /*  LCOV_EXCL_      STOP. */
+
     return bhdr;
 }
 
@@ -281,120 +293,98 @@ blockheader *do_coalesce_right(blockheader *bhdr)
 
 static inline blockheader *try_coalesce(blockheader *bhdr)
 {
-    /*  As long as right free neighbours are found, we perform right 
-        coalescing. */
     while(bhdr->bhdr_next != NULL && bhdr->bhdr_next->is_free)
     {
         bhdr = do_coalesce_right(bhdr);
     }
 
-    /*  As long as left free neighbours are found, we perform left 
-        coalescing. */
     while(bhdr->bhdr_prev != NULL && bhdr->bhdr_prev->is_free)
     {
         bhdr = do_coalesce_right(bhdr->bhdr_prev);
     }
 
-    /*  We return the header pointer passed to the function because left
-        coalescing changes it and so it must be updated in the caller.  */
     return bhdr;
 }
 
 
 
-void dfree(void *payload, void *arena)
+void dfree(void *p, void *arena)
 {
-    /*  As stated in N1570 §7.22.3.3 for the free() function: "If [payload] is
-        a null pointer, no action occurs". We'll follow the standard.   */
-    if(payload == NULL)
+    if(p == NULL)
     {
         return;
     }
 
-    /*  payload could not be a pointer to memory allocated by the allocator 
-        functions. The standard for free() says that "if the argument does not
-        match a pointer earlier returned by a memory management function [...] 
-        the behavior is undefined". However, for the sake of trying to prevent
-        any corruption, we'll check if payload is a valid pointer by comparing 
-        its alleged header to every possible valid header pointer. Finding no 
-        match means the pointer is probabily invalid, and in that case we do 
-        nothing.    */
+    /*  LCOV_EXCL_      START. */
+    if(arena == NULL)
+    {
+        arena = heap_start;
+    }
+    /*  LCOV_EXCL_      STOP. */
 
-    blockheader *bhdr_payload = GET_BLOCKHDR(payload);
-    arenaheader *ahdr = GET_ARENAHDR((uintptr_t)arena);
+    blockheader *bhdr_p = GET_BLOCKHDR(p);
+    arenaheader *ahdr = GET_ARENAHDR(arena);
+
+// #ifdef DFREE_PEDANTIC
+/*
+    if((uintptr_t)p < (uintptr_t)ahdr->bhdr_first + AL_BLOCKHDR_SIZE
+    || (uintptr_t)p > (uintptr_t)ahdr->arena_end - AL_BLOCKHDR_SIZE)
+    {
+        return;
+    }
 
     blockheader *bhdr_curr = ahdr->bhdr_first;
 
-    while(bhdr_curr != bhdr_payload)
+    while(bhdr_curr != bhdr_p)
     {
         bhdr_curr = bhdr_curr->bhdr_next;
         if(bhdr_curr == NULL)
         {
-            /*  If we get into this branch, it means we found no falid match,
-                thus payload is invalid and we just silently return.    */
             return;
         }
     }
-
-    /*  The standard also calls undefined behaviour when a double free is
-        attempted. We can make easly turn this scenario deterministic by
-        silently returnign in such cases.   */
-    if(bhdr_payload->is_free)
+*/
+    if(bhdr_p->is_free)
     {
         return;
     }
+// #endif
 
+    bhdr_p->is_free = 1;
 
+    bhdr_p = try_coalesce(bhdr_p);
 
-
-
-    /*  After the previous checks, we can assume payload is valid, in the
-        sense that bhdr_payload corresponds to a valid header of our list that 
-        we can deallocate.  */
-
-    /*  Let's preemtively free the block.   */
-    bhdr_payload->is_free = 1;
-
-    /*  We can try block coalescing.        */
-    bhdr_payload = try_coalesce(bhdr_payload);
-
-
-    /*  If hdr happens to point to the last block in the arena, we can lower 
-        the program break.                      */
-    if(bhdr_payload->bhdr_next == NULL)
+    if(bhdr_p->bhdr_next == NULL)
     {
-        /*  Unless we also happen to be freeing the first block in the list, we
-            want to update the new-last block of our list.  */
-        if(bhdr_payload->bhdr_prev != NULL)
+        if(bhdr_p->bhdr_prev != NULL)
         {
-            bhdr_payload->bhdr_prev->bhdr_next = NULL;
+            bhdr_p->bhdr_prev->bhdr_next = NULL;
         }
         else
         {
             ahdr->bhdr_first = NULL;
         }
 
-        ahdr->brkshifter
-            (-(intptr_t)(AL_BLOCKHDR_SIZE + bhdr_payload->payload_size), ahdr);
+        ahdr->brkshifter(-(intptr_t)(AL_BLOCKHDR_SIZE + bhdr_p->payload_size),
+                         ahdr);
     }     
 }
 
 
 
-void *dcalloc(size_t n_el, size_t size_el, void *arena)
+void *dcalloc(size_t n, size_t size, void *arena)
 {
-    /*  If an overflow would happen, we return a NULL pointer.  */
-    if(size_el != 0 && n_el > SIZE_MAX / size_el)
+    if(size != 0 && n > SIZE_MAX / size)
     {
+        errno = ENOMEM;
         return NULL;
     }
 
-    void *p = dmalloc(n_el * size_el, arena);
+    void *p = dmalloc(n * size, arena);
 
     if(p != NULL)
     {
-        /*  We initialize the memory to 0.  */
-        memset(p, 0, n_el * size_el);
+        memset(p, 0, n * size);
     }
 
     return p;
@@ -402,153 +392,116 @@ void *dcalloc(size_t n_el, size_t size_el, void *arena)
 
 
 
-void *drealloc(void *payload, size_t size, void *dest, void *src)
+void *drealloc(void *p, size_t size, void *dest, void *src)
 {
-    /*  First, we need to handle the two trivial argument cases.    */
 
-    /*  1. According to N1570 §7.22.3.5, realloc(NULL, size) must behave like 
-        malloc(size). We will follow this standard with drealloc() and 
-        dmalloc().  */
-    if(payload == NULL)
+    if(p == NULL)
     {
         return dmalloc(size, dest);
     }
 
-    /*  2. The ISO C standard doesn't explicitly define what realloc() (and so
-        drealloc()) should do when size is 0. The UNIX manual states at 
-        https://man7.org/linux/man-pages/man3/realloc.3p.html that "If [size] 
-        is 0 [you can return] a pointer to the allocated space [and free] the 
-        memory object pointed to by [payload]. We choose this option. */
     if(size == 0)
     {
-        dfree(payload, src);
-        return payload;
+        dfree(p, src);
+        return p;
     }
 
+    size = ALIGN(size);
 
-
-
-
-    /*  Now, drealloc() can perform different operations when reallocating the
-        block, based on the resizing request and its position in the block 
-        list. We'll see them after setting the stage. */
-
-    size_t al_size = ALIGN(size);
-
-    /*  Aligning the payload new size may increase its value, so we must 
-    prevent a possible overflow.    */
-    if(al_size < size || al_size > SIZE_MAX - AL_BLOCKHDR_SIZE)
-    {
-        /*  For this situation, the ISO C standard imposes that "if memory for
-            the new object cannot be allocated, the old object is not 
-            deallocated and its value is unchanged" and asks to return a
-            pointer (in this case, unchanged) to the old object.            */
-        return payload;
-    }
-
-    size = al_size;
-
-    blockheader *bhdr_payload = GET_BLOCKHDR(payload);
+    blockheader *bhdr_p = GET_BLOCKHDR(p);
 
 
 
 
 
-    /*  We can now divide the drealloc() action into 6 cases.   */
-
-    /* 0. dest and src differ.  */
+    /*  1. dest and src differ. */
     if(dest != src)
     {
-        void *p = dmalloc(size, dest);
-        if(p == NULL)
+        void *p_new = dmalloc(size, dest);
+        if(p_new == NULL)
         {
-            return payload;
+            errno = ENOMEM;
         }
         else
         {
-            memcpy(p, payload, MIN(size, bhdr_payload->payload_size));
-            dfree(payload, src);
-            return p;
-        } 
+            memcpy(p_new, p, MIN(size, bhdr_p->payload_size));
+            dfree(p, src);
+        }
+        return p_new;
     }
 
 
 
 
 
-    /*  1. No change.   */
-    if(size == bhdr_payload->payload_size)
+    /*  2. Same size.   */
+    if(size == bhdr_p->payload_size)
     {
-        return payload;
+        return p;
     }
 
 
 
 
 
-    /*  2. The block must be shrunk. */
-    if(size < bhdr_payload->payload_size)
+    /*  3. To a smaller size.   */
+    if(size < bhdr_p->payload_size)
     {
-        /*  We can try to use block splitting if enough space becomes
-            available. We perform the check that should be handled by
-            try_split() and then call do_split() because we want to implement
-            additional logic. In particular, we are considering the cases where
-            we are shrinking a block that has a free block on the right, or no 
-            right blocks at all.    */
-        if((bhdr_payload->payload_size - size) >= MIN_BLOCK_SIZE)
+        if((bhdr_p->payload_size - size) >= MIN_BLOCK_SIZE)
         {
-            do_split(bhdr_payload, size);
+            do_split(bhdr_p, size);
 
-            /*  We might have a free block on the right to coalesce with.   */
-            try_coalesce(bhdr_payload->bhdr_next);
+            try_coalesce(bhdr_p->bhdr_next);
 
-            /*  Also, there's a possibility we created a free block at the end 
-                of the heap.    */
-            if(bhdr_payload->bhdr_next->bhdr_next == NULL)
+            /*  There's a chance we created a free block at the list end.   */
+            if(bhdr_p->bhdr_next->bhdr_next == NULL)
             {
-                /*  This will make the heap shrink. */
-                dfree((void *)((uintptr_t)bhdr_payload->bhdr_next 
-                                + AL_BLOCKHDR_SIZE), src);
+                /*  Allows us to use dfree to lower the break. If we don't
+                    manually mark the block as free, dfree() will treat the
+                    call as a double free case.  */
+                bhdr_p->bhdr_next->is_free = 0;
+
+                dfree((void *)
+                    ((uintptr_t)bhdr_p->bhdr_next + AL_BLOCKHDR_SIZE), src);
             }
         }
 
-        return payload;
+        return p;
     }
 
 
 
 
 
-    /*  3. The block must grow and it's in the middle of the list.  */
-    if(bhdr_payload->bhdr_next != NULL && bhdr_payload->bhdr_next->is_free == 1
-    && bhdr_payload->payload_size + AL_BLOCKHDR_SIZE 
-        + bhdr_payload->bhdr_next->payload_size >= size)
+    /*  4. To a bigger size mid-list with a free block next.    */
+    if(bhdr_p->bhdr_next != NULL && bhdr_p->bhdr_next->is_free == 1
+    && bhdr_p->payload_size
+            + AL_BLOCKHDR_SIZE 
+            + bhdr_p->bhdr_next->payload_size 
+        >= size)
     {
-        /*  We use right coalescing to merge the next block, found to be free,
-            to the current one, before "taking what we need" and trying 
-            splitting.  */
-        bhdr_payload = do_coalesce_right(bhdr_payload);
-        
-        try_split(bhdr_payload, size);
+        /*  We use right coalescing to merge with the next block before
+            allocation and possible splitting.  */
+        bhdr_p = do_coalesce_right(bhdr_p);
+        try_split(bhdr_p, size);
 
-        return payload;
+        return p;
     }
     
 
 
 
 
-    /*  4. The block must grow and it's at the end of the list. */
-    if(bhdr_payload->bhdr_next == NULL)
+    /*  5. To a bigger size at the end of the list. */
+    if(bhdr_p->bhdr_next == NULL)
     {
+        arenaheader *ahdr = GET_ARENAHDR(src);
 
-        arenaheader *ahdr = GET_ARENAHDR((uintptr_t)src);
-
-        if(ahdr->brkshifter((intptr_t)(size - bhdr_payload->payload_size), 
-                            ahdr) != (void *)(-1))
+        if(ahdr->brkshifter((intptr_t)(size - bhdr_p->payload_size), ahdr) 
+                            != (void *)(-1))
         {
-            bhdr_payload->payload_size = size;
-            return payload;
+            bhdr_p->payload_size = size;
+            return p;
         }
 
         /*
@@ -560,30 +513,28 @@ void *drealloc(void *payload, size_t size, void *dest, void *src)
 
 
 
-    /*  5. Fallback allocation case. The following code is executed when we are
-        forced to copy all the data to a new (bigger) location. */
+    /*  6. Fallback allocation case.    */
 
-    void *payload_new = dmalloc(size, src);
+    void *p_new = dmalloc(size, dest);
 
-    if(payload_new == NULL)
+    if(p_new == NULL)
     {
-        return payload;
+        errno = ENOMEM;
+        return NULL;
     }
 
-    memcpy(payload_new, payload, bhdr_payload->payload_size);
-
-    dfree(payload, src);
-
-    return payload_new;
+    memcpy(p_new, p, bhdr_p->payload_size);
+    dfree(p, src);
+    return p_new;
 }
 
 
 
 void *dreallocarray(void *p, size_t n, size_t size, void *dest, void *src)
 {
-    /*  If an overflow would happen, we return a NULL pointer.  */
     if(size != 0 && n > SIZE_MAX / size)
     {
+        errno = ENOMEM;
         return NULL;
     }
 
