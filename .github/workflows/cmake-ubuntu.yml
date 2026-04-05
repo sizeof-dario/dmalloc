@@ -43,7 +43,7 @@ jobs:
       run: ctest -C ${{env.BUILD_TYPE}}
 
     - name: Generate Coverage Report
-      run: ${LCOV_PATH} --directory ${{github.workspace}}/build --capture --output-file coverage.info --rc branch_coverage=1
+      run: lcov --capture --directory ${{github.workspace}}/build --output-file coverage.info --rc lcov_branch_coverage=1
       
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
