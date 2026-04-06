@@ -1,12 +1,12 @@
-/*
-    dmalloc memory allocator
+/******************************************************************************
+    
+        dmalloc hybrid arena allocator.
 
-    Check the project repo at https://github.com/sizeof-dario/dmalloc.git for
-    more information about it.
+    Project repo at https://github.com/sizeof-dario/dmalloc.git.
 
 ******************************************************************************/
 
-/*  "test.h" - Master include file for the allocator unit tests.             */
+/*  "test_dmalloc.h" - Master include file for the allocator unit tests.     */
 
 #ifndef DMALLOC_UNIT_TESTS_H
 #define DMALLOC_UNIT_TESTS_H 1

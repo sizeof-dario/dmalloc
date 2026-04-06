@@ -1,8 +1,8 @@
-/*
-    dmalloc memory allocator
+/******************************************************************************
+    
+        dmalloc hybrid arena allocator.
 
-    Check the project repo at https://github.com/sizeof-dario/dmalloc.git for
-    more information about it.
+    Project repo at https://github.com/sizeof-dario/dmalloc.git.
 
 ******************************************************************************/
 
@@ -19,6 +19,7 @@
 #endif
 
 #include <errno.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdalign.h>
 #include <stddef.h>
@@ -46,51 +47,29 @@ typedef struct blockheader
 
 typedef struct arenaheader
 {
+    pthread_mutex_t     lock;
     void               *arena_start;
     void               *arena_brk;
     void               *arena_end;
     blockheader        *bhdr_first;
-    void             *(*brkshifter)(intptr_t, struct arenaheader*);
+    void             *(*brkshifter)(intptr_t, struct arenaheader *);
 } arenaheader;
 
 
 
-/*  #### DESCRIPTION
-    `heapinit()` initializes the heap as an arena.
-    #### RETURN VALUE
-    On success, returns `0`.
-    On failure, returns `-1` with `errno` set.
-    #### ERRORS
-    -   `ENOMEM`
-        Out of memory. `heapinit()` called `sbrk()` that failed.  
-*/
-int heapinit();
-
-
-
-/*  #### DESCRIPTION
-    `arenasbrk()` increases or decreases of `delta` bytes the break of the
-    arena pointed to by `ahdr`.
-    #### RETURN VALUE
-    On success, returns the old arena break.
-    On failure, returns `(void *)(-1)` and sets `errno`.
-    #### ERRORS
-    -   `EINVAL`
-        Invalid argument. The function received `NULL` as the value for `ahdr`.
-    -   `EOVERFLOW`
-        Value too large for defined data type. `delta` was too big in modulus.
-    -   `ERANGE`
-        Result too large. The shift would cause the break to point somewhere
-        outside the arena.
-    #### NOTES
-    `arenasbrk(0, ahdr)` can be used to obtain the current break value. */
 void *arenasbrk(intptr_t delta, arenaheader *ahdr);
 
-
+int meminit(void *backing_memory, size_t capacity);
 
 void do_split(blockheader *bhdr, size_t bhdr_payload_size);
 
+void *dmalloc_unlocked(size_t size, arenaheader *ahdr);
+
 blockheader *do_coalesce_right(blockheader *bhdr);
+
+void dfree_unlocked(void *p, arenaheader *ahdr);
+
+
 
 #define ALIGN(val)  \
     (((val) + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1))
