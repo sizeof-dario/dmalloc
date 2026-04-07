@@ -109,7 +109,7 @@ static inline int heapinit()
 }
 
 
-int arenainit(void *backing_memory, size_t capacity)
+int darenainit(void *backing_memory, size_t capacity)
 {
     if(backing_memory == NULL)
     {
@@ -117,6 +117,34 @@ int arenainit(void *backing_memory, size_t capacity)
     }
 
     return meminit(backing_memory, capacity);
+}
+
+
+int darenadestroy(void *arena)
+{
+    if(arena == NULL)
+    {
+        return 0;
+    }
+
+    arenaheader *ahdr = GET_ARENAHDR(arena);
+
+    int retval = pthread_mutex_trylock(&ahdr->lock);
+    if(retval != 0)
+    {
+        errno = retval;
+        return -1;
+    }
+    pthread_mutex_unlock(&ahdr->lock);
+    pthread_mutex_destroy(&ahdr->lock);
+
+    ahdr->arena_start = NULL;
+    ahdr->arena_brk   = NULL;
+    ahdr->arena_end   = NULL;
+    ahdr->bhdr_first  = NULL;
+    ahdr->brkshifter  = NULL;
+
+    return 0;
 }
 
 

@@ -4,17 +4,9 @@ project(dmalloc C)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -pedantic")
 
-# option(ENABLE_DFREE_PEDANTIC "Enable pointer validation in dfree()" OFF)
 option(ENABLE_COVERAGE "Enable coverage reporting" OFF)
 
 add_library(dmalloc)
-
-#if(ENABLE_DFREE_PEDANTIC)
-#    message("DFREE_PEDANTIC is enabled! You can disable it with -DENABLE_DFREE_PEDANTIC=OFF.")
-#    target_compile_definitions(dmalloc PUBLIC DFREE_PEDANTIC=1)
-#else()
-#    message("DFREE_PEDANTIC is disabled! You can enable it with -DENABLE_DFREE_PEDANTIC=ON.")
-#endif()
 
 if(ENABLE_COVERAGE)
     message("ENABLE_COVERAGE is enabled! You can disable it with -DENABLE_COVERAGE=OFF.")

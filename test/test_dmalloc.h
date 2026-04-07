@@ -29,9 +29,9 @@ void test_arenasbrk_successfull_shifts();
 
 
 
-void test_arenainit_null_backing_memory();
-void test_arenainit_not_enough_space();
-void test_arenainit_successfull_initialization();
+void test_darenainit_null_backing_memory();
+void test_darenainit_not_enough_space();
+void test_darenainit_successfull_initialization();
 
 
 

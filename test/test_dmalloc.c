@@ -25,17 +25,13 @@ static char arena[CAPACITY];
 
 void setUp()
 {
-    TEST_ASSERT_GREATER_OR_EQUAL_INT(0, arenainit(arena, CAPACITY));
+    TEST_ASSERT_EQUAL_INT(0, darenainit(arena, CAPACITY));
 }
 
 void tearDown()
 {
-
+    TEST_ASSERT_EQUAL_INT(0, darenadestroy(arena));
 }
-
-
-
-
 
 /*  arenasbrk() tests. */
 
@@ -118,25 +114,25 @@ void test_arenasbrk_successfull_shifts()
 
 /*  arenainit() tests. */
 
-void test_arenainit_null_backing_memory()
+void test_darenainit_null_backing_memory()
 {
     int old_errno = errno;
-    TEST_ASSERT_EQUAL_INT(0, arenainit(NULL, ANY_CAPACITY));
+    TEST_ASSERT_EQUAL_INT(0, darenainit(NULL, ANY_CAPACITY));
     TEST_ASSERT_EQUAL_INT(old_errno, errno);
 }
 
-void test_arenainit_not_enough_space()
+void test_darenainit_not_enough_space()
 {
 
     char buffer[AL_ARENAHDR_SIZE - 1];
 
     errno = 0;
      
-    TEST_ASSERT_EQUAL_INT(-1, arenainit(buffer, AL_ARENAHDR_SIZE - 1));
+    TEST_ASSERT_EQUAL_INT(-1, darenainit(buffer, AL_ARENAHDR_SIZE - 1));
     TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 }
 
-void test_arenainit_successfull_initialization()
+void test_darenainit_successfull_initialization()
 {
     arenaheader *ahdr = GET_ARENAHDR(arena);
 
@@ -509,7 +505,7 @@ void test_drealloc_different_src_and_dest()
 {
     char other_arena[CAPACITY];
 
-    TEST_ASSERT_EQUAL_INT(0, arenainit(other_arena, CAPACITY));
+    TEST_ASSERT_EQUAL_INT(0, darenainit(other_arena, CAPACITY));
 
     int *p1 = (int *)dmalloc(sizeof(int), arena);
     int *p2 = (int *)dmalloc(sizeof(int), arena);

@@ -18,9 +18,9 @@ int main()
     RUN_TEST(test_arenasbrk_out_of_bounds_protection);
     RUN_TEST(test_arenasbrk_successfull_shifts);
 
-    RUN_TEST(test_arenainit_null_backing_memory);
-    RUN_TEST(test_arenainit_not_enough_space);
-    RUN_TEST(test_arenainit_successfull_initialization);
+    RUN_TEST(test_darenainit_null_backing_memory);
+    RUN_TEST(test_darenainit_not_enough_space);
+    RUN_TEST(test_darenainit_successfull_initialization);
 
     RUN_TEST(test_dmalloc_successfull_allocations);
     RUN_TEST(test_dmalloc_unsuccessfull_allocation);
