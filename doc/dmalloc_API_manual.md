@@ -4,8 +4,8 @@
 > This manual structure was heavily inspired by the [man pages](https://man7.org/linux/man-pages/index.html). For this reason, some paragraphs link directly to them when referencing some of their original terms.
 
 ## Index
-1. [**darenainit()**](#darenainit)
-    - [Synopsis](#synopsis)
+1. [**Synopsis**](#synopsis)
+2. [**darenainit()**](#darenainit)
     - [Description](#description)
     - [Return value](#return-value)
     - [Errors](#errors)
@@ -14,12 +14,19 @@
     - [Notes](#notes)
     - [Examples](#examples)
 
-## **darenainit()**
+## Synopsis
 
-### Synopsis
 &nbsp; &nbsp; &nbsp; &nbsp; <b>#include "dmalloc.h"</b>
  
-&nbsp; &nbsp; &nbsp; &nbsp; <b>int \*darenainit(void\*</b> <i>backing_memory</i><b>, size_t</b><i>capacity</i><b>);</b>
+&nbsp; &nbsp; &nbsp; &nbsp; <b>int darenainit(void\*</b> <i>backing_memory</i><b>, size_t</b> <i>capacity</i><b>);</b> \
+&nbsp; &nbsp; &nbsp; &nbsp; <b>int darenadestroy(void \*</b><i>arena</i><b>);</b> \
+&nbsp; &nbsp; &nbsp; &nbsp; <b>void \*dmalloc(size_t</b> <i>size</i><b>, void \*</b><i>arena</i><b>);</b> \
+&nbsp; &nbsp; &nbsp; &nbsp; <b>void dfree(void \*</b><i>p</i><b>, void *</b><i>arena</i><b>);</b> \
+&nbsp; &nbsp; &nbsp; &nbsp; <b>void \*dcalloc(size_t </b><i>n</i><b>, size_t </b><i>size</i><b>, void \*</b><i>arena</i><b>);</b> \
+&nbsp; &nbsp; &nbsp; &nbsp; <b>void \*drealloc(void *</b><i>p</i><b>, size_t </b><i>size</i><b>, void \*</b><i>dest</i><b>, void \*</b><i>src</i><b>);</b> \
+&nbsp; &nbsp; &nbsp; &nbsp; <b>void \*dreallocarray(void *</b><i>p</i><b>, size_t </b><i>n</i><b>, size_t </b><i>size</i><b>, void \*</b><i>dest</i><b>, void \*</b><i>src</i><b>);</b>
+
+## **darenainit()**
 
 ### Description
 
@@ -56,10 +63,6 @@ None.
 
 ## **dmalloc()**
 
-### Synopsis
-&nbsp; &nbsp; &nbsp; &nbsp; <b>#include "dmalloc.h"</b>
- 
-&nbsp; &nbsp; &nbsp; &nbsp; <b>void \*dmalloc(size_t</b> <i>size</i><b>, void \*</b><i>arena</i><b>);</b>
 ### Description
 
 **dmalloc**() allocates *size* bytes of memory in the arena pointed to by *arena*. If *arena* is NULL, the memory is allocated on the heap. The memory is not initialized.  If *size* is 0, then **dmalloc**() returns a unique pointer value that can later be successfully passed to **dfree**().
