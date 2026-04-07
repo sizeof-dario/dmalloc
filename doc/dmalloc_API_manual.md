@@ -3,14 +3,63 @@
 > [!NOTE]
 > This manual structure was heavily inspired by the [man pages](https://man7.org/linux/man-pages/index.html). For this reason, some paragraphs link directly to them when referencing some of their original terms.
 
-[## Index]: #
+## Index
+1. [**darenainit()**](#darenainit)
+    - [Synopsis](#synopsis)
+    - [Description](#description)
+    - [Return value](#return-value)
+    - [Errors](#errors)
+    - [Attributes](#attributes)
+    - [Standars](#standards)
+    - [Notes](#notes)
+    - [Examples](#examples)
+
+## **darenainit()**
+
+### Synopsis
+&nbsp; &nbsp; &nbsp; &nbsp; <b>#include "dmalloc.h"</b>
+ 
+&nbsp; &nbsp; &nbsp; &nbsp; <b>int \*darenainit(void\*</b> <i>backing_memory</i><b>, size_t</b><i>capacity</i><b>);</b>
+
+### Description
+
+**darenainit**() initializes the memory region pointed to by *backing_memory* and of size *capacity* to an arena. If *backing_memory* is NULL, the function just returns 0.
+
+### Return value
+
+On success, **darenainit**() returns 0. On failure, it returns -1 and sets [errno](https://man7.org/linux/man-pages/man3/errno.3.html).
+
+### Errors
+
+**ENOMEM** Out of memory. \
+**darenainit**() failed because *capacity* was not big enough for a properly initialized arena.
+
+### Attributes
+
+For an explanation of the terms used in this section, see [attributes(7)](https://man7.org/linux/man-pages/man7/attributes.7.html).
+
+| **Interface** | **Attribute** | **Value** |
+|:--------------|:--------------|:----------|
+| **dmalloc**() | Thread safety | MT-Unsafe |
+
+### Standards
+
+None.
+
+### Notes
+
+Trying to initialize an arena more than once causes undefined behaviour, especially dangerous in multi-threaded applications. However, note that after initialization, any arena is safe to be used in a multi-threaded context with all of the other allocator functions.
+
+### Examples
+
+None.
 
 ## **dmalloc()**
 
 ### Synopsis
 &nbsp; &nbsp; &nbsp; &nbsp; <b>#include "dmalloc.h"</b>
  
-&nbsp; &nbsp; &nbsp; &nbsp; <b>void *dmalloc(size_t</b> <i>size</i><b>, void *</b><i>arena</i><b>);</b>
+&nbsp; &nbsp; &nbsp; &nbsp; <b>void \*dmalloc(size_t</b> <i>size</i><b>, void \*</b><i>arena</i><b>);</b>
 ### Description
 
 **dmalloc**() allocates *size* bytes of memory in the arena pointed to by *arena*. If *arena* is NULL, the memory is allocated on the heap. The memory is not initialized.  If *size* is 0, then **dmalloc**() returns a unique pointer value that can later be successfully passed to **dfree**().
@@ -71,7 +120,7 @@ int main()
     dfree(p, arena);
 
     /*  It is not mandatory to destroy an arena at the end of your application,
-        especially in a single threaded one. Yet, it is good practice along with
+        especially in a single-threaded one. Yet, it is good practice along with
         memory deallocation. */
     if(darenadestroy(arena) < 0)
     {
