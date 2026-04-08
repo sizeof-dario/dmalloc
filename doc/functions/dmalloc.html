@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>dmalloc() - dmalloc API manual</title>
+    <link rel=stylesheet href="../style/style.css"/>
+    <link rel=stylesheet href="../style/functionpage_style.css"/>
+</head>
+
+<body>
+    <div class="page-top"><a id="top_of_page"></a></div>
+
+    <div class="nav-bar">
+        <p class = "nav-text">
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="dmalloc.html">dmalloc()</a>
+        </p>
+    </div>
+    <hr class="nav-end"/>
+
+
+
+
+
+
+    <h1>dmalloc() &mdash; dmalloc API manual</h1>
+
+    <table class="sec-table">
+    <tr>
+        <td>
+            <p class="section-dir">
+                <a href="#NAME">NAME</a> | <a href="#SYNOPSIS">SYNOPSIS</a> | <a href="#DESCRIPTION">DESCRIPTION</a> | <a href="#RETURN_VALUE">RETURN&nbsp;VALUE</a> | <a href="#ERRORS">ERRORS</a> | <a href="#ATTRIBUTES">ATTRIBUTES</a> | <a href="#STANDARDS">STANDARDS</a> | <a href="#EXAMPLES">EXAMPLES</a>
+            </p>
+        </td>
+    </tr>
+    </table>
+
+<pre>
+<span class="headline"><i>dmalloc</i>()                      dmalloc API manual                      <i>dmalloc</i>()</span>
+</pre>
+
+<h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
+<pre>
+        dmalloc - allocates memory.
+</pre>
+
+<h2><a id="SYNOPSIS" href="#SYNOPSIS"></a>SYNOPSIS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+
+        <b>#include "dmalloc.h"</b>
+
+        <b>void *dmalloc(size_t</b> <i>size</i><b>, void *</b><i>arena</i><b>);</b>
+</pre>
+
+<h2><a id="DESCRIPTION" href="#DESCRIPTION"></a>DESCRIPTION  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        The function <b>dmalloc</b>() allocates <i>size</i> bytes of memory in the arena
+        pointed to by <i>arena</i>. If <i>arena</i> is NULL, the memory is allocated on the
+        heap. The memory is not initialized. If <i>size</i> is 0, then <b>dmalloc</b>()
+        returns a unique pointer value that can later be successfully passed to
+        <b>dfree</b>(). When non-NULL, <i>arena</i> must be initialized by <b>darenainit</b>() before
+        being passed to <b>dmalloc</b>(). Not doing so results in undefined behaviour.
+</pre>
+        
+<h2><a id="RETURN_VALUE" href="#RETURN_VALUE"></a>RETURN VALUE  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        On success, <b>dmalloc</b>() returns a pointer to the allocated memory. On
+        failure, it returns NULL and sets <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.
+</pre>
+
+<h2><a id="ERRORS" href="#ERRORS"></a>ERRORS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        <b>ENOMEM</b>  Out of memory. <b>dmalloc</b>() may have failed for a handful of
+                reasons, depending on where the memory was supposed to be
+                allocated. It possibly failed because an arena allocation in an
+                arena with not enough available space was attempted. Otherwise,
+                for the case of a heap allocation, the function failed because
+                the heap was full or because an error occurred while the heap
+                was being initialized.
+</pre>
+
+<h2><a id="ATTRIBUTES" href="#ATTRIBUTES"></a>ATTRIBUTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        For an explanation of the terms used in this section, see <a href="https://man7.org/linux/man-pages/man7/attributes.7.html">attributes(7)</a>.
+        ┌────────────────────────────────────┬───────────────┬───────────┐
+        │ <b>Interface</b>                          │ <b>Attribute</b>     │ <b>Value</b>     │
+        ├────────────────────────────────────┼───────────────┼───────────┤
+        │ <b>arenainit</b>()                        │ Thread safety │ MT-Safe   │
+        └────────────────────────────────────┴───────────────┴───────────┘
+</pre>
+
+<h2><a id="STANDARDS" href="#STANDARDS"></a>STANDARDS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        <b>dmalloc</b>() is supposed to behave like <b>malloc</b>() when dealing with the
+        heap. For this reason, it follows the <a href="https://man7.org/linux/man-pages/man3/malloc.3p.html">POSIX standard</a> on top of the <a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf#subsubsection.7.24.3.6">
+        ISO/IEC 9899:2024 §7.24.3.6</a> C standard.
+</pre>
+
+<h2><a id="EXAMPLES" href="#EXAMPLES"></a>EXAMPLES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        #include "dmalloc.h"
+        #include &lt;stdio.h&gt; // For perror() and printf().
+        #include &lt;stdlib.h&gt; // For exit() and the EXIT_* macros.
+
+        #define CAPACITY 1024
+
+        int main()
+        {
+            char arena[CAPACITY];
+
+            // The arena must be initialized first.
+            if(darenainit(arena, CAPACITY) < 0)
+            {
+                perror("darenainit");
+                exit(EXIT_FAILURE);
+            }
+
+            void *p = dmalloc(512, arena);
+
+            if(p == NULL)
+            {
+                perror("dmalloc");
+                exit(EXIT_FAILURE);
+            }
+
+            printf("Allocated memory starts at address: %p.\n", p);    
+
+            dfree(p, arena);
+
+            /*  It is not mandatory to destroy an arena at the end of an
+                application, especially in a single-threaded one. Yet, it is
+                good practice along with memory deallocation. */
+            if(darenadestroy(arena) < 0)
+            {
+                perror("darenadestroy");
+                exit(EXIT_FAILURE);
+            }
+
+            exit(EXIT_SUCCESS);
+        }
+</pre>
+
+<pre>
+<span class="footline">dmalloc API manual                 2026-04-08                          <i>dmalloc</i>()</span>
+</pre>
+
+<hr/>
+
+    <hr class = "start-footer"/>
+        <div class = "footer">
+            <p>
+                2026 <a href = "https://github.com/sizeof-dario"><b style="color: revert;">malloc</b> sizeof-dario</a>
+            </p>
+        </div>
+    <hr class = "end-footer"/>
+</body>
+</html>

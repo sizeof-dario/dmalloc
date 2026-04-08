@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>darenainit() - dmalloc API manual</title>
+    <title>darenadestroy() - dmalloc API manual</title>
     <link rel=stylesheet href="../style/style.css"/>
     <link rel=stylesheet href="../style/functionpage_style.css"/>
 </head>
@@ -13,7 +13,7 @@
 
     <div class="nav-bar">
         <p class = "nav-text">
-        dmalloc API manual > <a href="../index.html">index</a> > <a href="darenainit.html">darenainit()</a>
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="darenadestroy.html">darenadestroy()</a>
         </p>
     </div>
     <hr class="nav-end"/>
@@ -23,7 +23,7 @@
 
 
 
-    <h1>darenainit() &mdash; dmalloc API manual</h1>
+    <h1>darenadestroy() &mdash; dmalloc API manual</h1>
 
     <table class="sec-table">
     <tr>
@@ -36,35 +36,42 @@
     </table>
 
 <pre>
-<span class="headline"><i>darenainit</i>()                   dmalloc API manual                   <i>darenainit</i>()</span>
+<span class="headline"><i>darenadestroy</i>()                dmalloc API manual                <i>darenadestroy</i>()</span>
 </pre>
 
 <h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
 <pre>
-        darenainit - initializes an arena.
+        darenadestroy - destroys an arena.
 </pre>
 
 <h2><a id="SYNOPSIS" href="#SYNOPSIS"></a>SYNOPSIS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
 
         <b>#include "dmalloc.h"</b>
 
-        <b>int darenainit(void*</b> <i>backing_memory</i><b>, size_t</b> <i>capacity</i><b>);</b>
+        <b>int darenadestroy(void *</b><i>arena</i><b>);</b>
 </pre>
 
 <h2><a id="DESCRIPTION" href="#DESCRIPTION"></a>DESCRIPTION  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        The function <b>darenainit</b>() initializes the memory region pointed to by 
-        <i>backing_memory</i> and of size <i>capacity</i> to an arena. If <i>backing_memory</i> is 
-        NULL, the function just returns 0.   
-</pre>
+        The function <b>darenastroy</b>() destroys the arena pointed to by <i>arena</i>. If
+        <i>arena</i> is NULL, <b>darenadestroy</b>() just returns 0. <i>arena</i> must be a pointer
+        to an arena previously initialized by <b>darenainit</b>(). If not, it causes
+        undefined behaviour.
+    </pre>
         
 <h2><a id="RETURN_VALUE" href="#RETURN_VALUE"></a>RETURN VALUE  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        On success, <b>darenainit</b>() returns 0. On failure, it returns -1, and sets
-        <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.
+        On success, <b>darenadestroy</b>() returns 0. On failure, it returns -1, and
+        sets <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.
 </pre>
 
 <h2><a id="ERRORS" href="#ERRORS"></a>ERRORS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        <b>ENOMEM</b>  Out of memory. <b>darenainit</b>() failed because <i>capacity</i> was not big 
-                enough for a properly initialized arena.
+        <b>darenadestroy</b>() can only fail in multi-threaded applications with one of
+        the following errors:
+
+        <b>EBUSY</b>   Device or resource busy. <b>darenadestroy</b>() was called upon an
+                arena owned by another thread.
+
+        <b>EINVAL</b>  Invalid argument. <b>darenadestroy</b>() was called upon an arena that
+                had not been properly initialized.
 </pre>
 
 <h2><a id="ATTRIBUTES" href="#ATTRIBUTES"></a>ATTRIBUTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
@@ -72,7 +79,7 @@
         ┌────────────────────────────────────┬───────────────┬───────────┐
         │ <b>Interface</b>                          │ <b>Attribute</b>     │ <b>Value</b>     │
         ├────────────────────────────────────┼───────────────┼───────────┤
-        │ <b>arenainit</b>()                        │ Thread safety │ MT-Unsafe │
+        │ <b>arenainit</b>()                        │ Thread safety │ MT-Safe   │
         └────────────────────────────────────┴───────────────┴───────────┘
 </pre>
 
@@ -81,13 +88,10 @@
 </pre>
 
 <h2><a id="NOTES" href="#NOTES"></a>NOTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        Trying to initialize an arena more than once is considered unsafe. It
-        can still be done in single-threaded applications, because the critical 
-        step of arena initialization is dealing with mutexes, but it does become
-        source of undefined behaviour in multi-threaded ones. 
-        
-        However, note that after initialization, any arena is safe to be used in
-        a multi-threaded context with all of the other allocator functions.
+        It is not mandatory to destroy an arena at the end of an application,
+        especially in a single threaded one. However, it is necessary in
+        multi-threaded applications, when the one intends to reuse the backing
+        memory that had been initialized to that arena.
 </pre>
 
 <pre>
