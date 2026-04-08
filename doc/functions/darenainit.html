@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>darenainit() - dmalloc API manual</title>
+    <link rel=stylesheet href="../style/style.css"/>
+    <link rel=stylesheet href="../style/functionpage_style.css"/>
+</head>
+
+<body>
+    <div class="page-top"><a id="top_of_page"></a></div>
+    <!--%%%TOP_BAR%%%-->
+    <div class="nav-bar">
+        <p class = "nav-text">
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="darenainit.html">darenainit()</a>
+        </p>
+    </div>
+    <hr class="nav-end"/>
+
+
+
+
+
+
+    <h1>darenainit() &mdash; dmalloc API manual</h1>
+
+    <table class="sec-table">
+    <tr>
+        <td>
+            <p class="section-dir">
+                <a href="#NAME">NAME</a> | <a href="#SYNOPSIS">SYNOPSIS</a> | <a href="#DESCRIPTION">DESCRIPTION</a> | <a href="#RETURN_VALUE">RETURN&nbsp;VALUE</a> | <a href="#ERRORS">ERRORS</a> | <a href="#ATTRIBUTES">ATTRIBUTES</a> | <a href="#STANDARDS">STANDARDS</a> | <a href="#NOTES">NOTES</a>
+            </p>
+        </td>
+    </tr>
+    </table>
+
+<pre>
+<span class="headline"><i>darenainit</i>()                dmalloc API manual               <i>darenainit</i>()</span>
+</pre>
+
+<h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
+<pre>
+        darenainit - initialize an arena
+</pre>
+
+<h2><a id="SYNOPSIS" href="#SYNOPSIS"></a>SYNOPSIS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+
+        <b>#include "dmalloc.h"</b>
+
+        <b>int darenainit(void*</b> <i>backing_memory</i><b>, size_t</b> <i>capacity</i><b>);</b>
+</pre>
+
+<h2><a id="DESCRIPTION" href="#DESCRIPTION"></a>DESCRIPTION  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        The function <b>darenainit</b>() initializes the memory region pointed to by 
+        <i>backing_memory</i> and of size <i>capacity</i> to an arena. If <i>backing_memory</i> is 
+        NULL, the function just returns 0.   
+</pre>
+        
+<h2><a id="RETURN_VALUE" href="#RETURN_VALUE"></a>RETURN VALUE  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        On success, <b>darenainit</b>() returns 0. On failure, it returns -1, and sets
+        <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.
+</pre>
+
+<h2><a id="ERRORS" href="#ERRORS"></a>ERRORS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        <b>ENOMEM</b>  Out of memory. <b>darenainit</b>() failed because <i>capacity</i> was not big 
+                enough for a properly initialized arena.
+</pre>
+
+<h2><a id="ATTRIBUTES" href="#ATTRIBUTES"></a>ATTRIBUTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        For an explanation of the terms used in this section, see <a href="https://man7.org/linux/man-pages/man7/attributes.7.html">attributes(7)</a>.
+        ┌─────────────────────────────────────┬───────────────┬──────────┐
+        │ <b>Interface</b>                           │ <b>Attribute</b>     │ <b>Value</b>    │
+        ├─────────────────────────────────────┼───────────────┼──────────┤
+        │ <b>arenainit</b>()                         │ Thread safety │ MT-Unafe │
+        └─────────────────────────────────────┴───────────────┴──────────┘
+</pre>
+
+<h2><a id="STANDARDS" href="#STANDARDS"></a>STANDARDS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        None.
+</pre>
+
+<h2><a id="NOTES" href="#NOTES"></a>NOTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        Trying to initialize an arena more than once is considered unsafe. It
+        can still be done in single-threaded applications, because the critical 
+        step of arena initialization is dealing with mutexes, but it does become
+        source of undefined behaviour in multi-threaded ones. 
+        
+        However, note that after initialization, any arena is safe to be used in
+        a multi-threaded context with all of the other allocator functions.
+</pre>
+
+<pre>
+<span class="footline">dmalloc API manual              2026-04-08                   <i>darenainit</i>()</span>
+</pre>
+
+<hr/>
+
+    <hr class = "start-footer"/>
+        <div class = "footer">
+            <p>
+                2026 <a href = "https://github.com/sizeof-dario"><b style="color: revert;">malloc</b> sizeof-dario</a>
+            </p>
+        </div>
+    <hr class = "end-footer"/>
+</body>
+</html>
