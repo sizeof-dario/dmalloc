@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>darena_t - dmalloc API manual page</title>
+    <link rel=stylesheet href="../styles/base_style.css"/>
+    <link rel=stylesheet href="../styles/page_style.css"/>
+</head>
+
+<body>
+    <div class="page-top"><a id="top_of_page"></a></div>
+
+    <div class="nav-bar">
+        <p class = "nav-text">
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="darena_t.html">darena_t</a>
+        </p>
+    </div>
+    <hr class="nav-end"/>
+
+
+
+
+
+
+    <h1>darena_t &mdash; dmalloc API manual page</h1>
+
+    <table class="sec-table">
+    <tr>
+        <td>
+            <p class="section-dir">
+                <a href="#NAME">NAME</a> | <a href="#SYNOPSIS">SYNOPSIS</a> | <a href="#DESCRIPTION">DESCRIPTION</a> | <a href="#NOTES">NOTES</a>
+            </p>
+        </td>
+    </tr>
+    </table>
+
+<pre>
+<span class="headline"><i>darena_t</i>                    dmalloc API types manual                    <i>darena_t</i></span>
+</pre>
+
+<h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
+<pre>
+        darena_t - memory arena.
+</pre>
+
+<h2><a id="SYNOPSIS" href="#SYNOPSIS"></a>SYNOPSIS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+
+        <b>#include "dmalloc.h"</b>
+
+        <b>typedef void darena_t;</b>
+</pre>
+
+<h2><a id="DESCRIPTION" href="#DESCRIPTION"></a>DESCRIPTION  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        The <b>dmalloc</b>(), <b>dfree</b>(), <b>dcalloc</b>(), <b>drealloc</b>() and <b>dreallocarray</b>()
+        functions are designed to work both on the heap and in arenas. In the
+        context of the dmalloc allocator, an arena is any memory region
+        initialized by the <b>darenainit</b>() function. Initialization is required for
+        the allocator functions to properly manage the memory. Thus, pointers to
+        type <b>darena_t</b> are used in the allocator functions signatures to signal
+        that they require a pointer to some backing memory that has been 
+        initialized by <b>darenainit</b>().
+
+        All of the allocator functions can receive NULL as a value for their 
+        argument(s) of type <b>darena_t *</b>. Apart from the <b>darenadestroy</b>() function,
+        that just does nothing in such case, the other allocator functions shall
+        perform their tasks on the heap upon receiving a NULL <b>darena_t</b> pointer.
+</pre>
+    
+<h2><a id="NOTES" href="#NOTES"></a>NOTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        The type <b>darena_t</b> serves no purpose apart from being used, in the form
+        of pointers to it, in the allocator functions signatures, for the reason
+        explained in the DESCRIPTION.
+</pre>
+
+<pre>
+<span class="footline">dmalloc API manual pages           2026-04-08                           <i>darena_t</i></span>
+</pre>
+
+<hr/>
+
+    <hr class = "start-footer"/>
+        <div class = "footer">
+            <p>
+                2026 <a href = "https://github.com/sizeof-dario"><b style="color: revert;">malloc</b> sizeof-dario</a>
+            </p>
+        </div>
+    <hr class = "end-footer"/>
+</body>
+</html>

@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>darenainit() - dmalloc API manual</title>
-    <link rel=stylesheet href="../style/style.css"/>
-    <link rel=stylesheet href="../style/functionpage_style.css"/>
+    <title>dfree() - dmalloc API manual</title>
+    <link rel=stylesheet href="../styles/base_style.css"/>
+    <link rel=stylesheet href="../styles/page_style.css"/>
 </head>
 
 <body>
@@ -13,7 +13,7 @@
 
     <div class="nav-bar">
         <p class = "nav-text">
-        dmalloc API manual > <a href="../index.html">index</a> > <a href="darenainit.html">darenainit()</a>
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="dfree.html">dfree()</a>
         </p>
     </div>
     <hr class="nav-end"/>
@@ -23,7 +23,7 @@
 
 
 
-    <h1>darenainit() &mdash; dmalloc API manual</h1>
+    <h1>dfree() &mdash; dmalloc API manual</h1>
 
     <table class="sec-table">
     <tr>
@@ -36,58 +36,52 @@
     </table>
 
 <pre>
-<span class="headline"><i>darenainit</i>()                   dmalloc API manual                   <i>darenainit</i>()</span>
+<span class="headline"><i>dfree</i>()                        dmalloc API manual                        <i>dfree</i>()</span>
 </pre>
 
 <h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
 <pre>
-        darenainit - initializes an arena.
+        dfree - deallocates memory.
 </pre>
 
 <h2><a id="SYNOPSIS" href="#SYNOPSIS"></a>SYNOPSIS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-
         <b>#include "dmalloc.h"</b>
 
-        <b>int darenainit(void*</b> <i>backing_memory</i><b>, size_t</b> <i>capacity</i><b>);</b>
+        <b>void dfree(void *</b><i>p</i><b>, darena_t *</b><i>arena</i><b>);</b>
 </pre>
 
 <h2><a id="DESCRIPTION" href="#DESCRIPTION"></a>DESCRIPTION  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        The function <b>darenainit</b>() initializes the memory region pointed to by 
-        <i>backing_memory</i> and of size <i>capacity</i> to an arena. If <i>backing_memory</i> is 
-        NULL, the function just returns 0.   
-</pre>
+        The function <b>dfree</b>() deallocates the memory pointed to by <i>p</i> from the
+        arena pointed to by <i>arena</i>. If <i>arena</i> is NULL, the memory is deallocated
+        from the heap. If <i>p</i> is NULL, no action occurs. <i>p</i> is not a pointer
+        returned from <b>dmalloc</b>(), <b>dcalloc</b>(), <b>drealloc</b>() or <b>dreallocarray</b>(), the
+        behaviour is undefined.
+        </pre>
         
 <h2><a id="RETURN_VALUE" href="#RETURN_VALUE"></a>RETURN VALUE  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        On success, <b>darenainit</b>() returns 0. On failure, it returns -1, and sets
-        <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.
-</pre>
+        The <b>dfree</b>() function returns no value and preserves <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.</pre>
 
 <h2><a id="ERRORS" href="#ERRORS"></a>ERRORS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        <b>ENOMEM</b>  Out of memory. <b>darenainit</b>() failed because <i>capacity</i> was not big 
-                enough for a properly initialized arena.
-</pre>
+        No errors are defined.</pre>
 
 <h2><a id="ATTRIBUTES" href="#ATTRIBUTES"></a>ATTRIBUTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
         For an explanation of the terms used in this section, see <a href="https://man7.org/linux/man-pages/man7/attributes.7.html">attributes(7)</a>.
         ┌────────────────────────────────────┬───────────────┬───────────┐
         │ <b>Interface</b>                          │ <b>Attribute</b>     │ <b>Value</b>     │
         ├────────────────────────────────────┼───────────────┼───────────┤
-        │ <b>arenainit</b>()                        │ Thread safety │ MT-Unsafe │
+        │ <b>arenainit</b>()                        │ Thread safety │ MT-Safe   │
         └────────────────────────────────────┴───────────────┴───────────┘
 </pre>
 
 <h2><a id="STANDARDS" href="#STANDARDS"></a>STANDARDS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        None.
+        <b>dfree</b>() is supposed to behave like <b>free</b>() when dealing with the
+        heap. For this reason, it follows the <a href="https://man7.org/linux/man-pages/man3/free.3p.html">POSIX standard</a> on top of the <a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf#subsubsection.7.24.3.3">
+        ISO/IEC 9899:2024 §7.24.3.3</a> C standard.
 </pre>
 
 <h2><a id="NOTES" href="#NOTES"></a>NOTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
-        Trying to initialize an arena more than once is considered unsafe. It
-        can still be done in single-threaded applications, because the critical 
-        step of arena initialization is dealing with mutexes, but it does become
-        source of undefined behaviour in multi-threaded ones. 
-        
-        However, note that after initialization, any arena is safe to be used in
-        a multi-threaded context with all of the other allocator functions.
+        Unlike <b>free</b>(), whose behaviour is undefined when called upon an
+        aready freed pointer, <b>dfree</b>() just returns in that case.
 </pre>
 
 <pre>
