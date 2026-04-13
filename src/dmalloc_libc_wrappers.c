@@ -16,22 +16,22 @@ void *malloc(size_t size)
     return dmalloc(size, NULL);
 }
 
-void free(void *__ptr)
+void free(void *p)
 {
-    dfree(__ptr, NULL);
+    dfree(p, NULL);
 }
 
-void *calloc(size_t __nmemb, size_t __size)
+void *calloc(size_t n, size_t size)
 {
-    return dcalloc(__nmemb, __size, NULL);
+    return dcalloc(n, size, NULL);
 }
 
-void *realloc(void *__ptr, size_t __size)
+void *realloc(void *p, size_t size)
 {
-    return drealloc(__ptr, __size, NULL, NULL);
+    return drealloc(p, size, NULL, NULL);
 }
 
-void *reallocarray(void *__ptr, size_t __nmemb, size_t __size)
+void *reallocarray(void *p, size_t n, size_t size)
 {
-    return dreallocarray(__ptr, __nmemb, __size, NULL, NULL);
+    return dreallocarray(p, n, size, NULL, NULL);
 }

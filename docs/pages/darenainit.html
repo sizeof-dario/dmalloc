@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>darenainit() - dmalloc API manual</title>
+    <title>darenainit - dmalloc API manual page</title>
     <link rel=stylesheet href="../styles/base_style.css"/>
     <link rel=stylesheet href="../styles/page_style.css"/>
 </head>
@@ -13,7 +13,7 @@
 
     <div class="nav-bar">
         <p class = "nav-text">
-        dmalloc API manual > <a href="../index.html">index</a> > <a href="darenainit.html">darenainit()</a>
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="darenainit.html">darenainit</a>
         </p>
     </div>
     <hr class="nav-end"/>
@@ -23,7 +23,7 @@
 
 
 
-    <h1>darenainit() &mdash; dmalloc API manual</h1>
+    <h1>darenainit &mdash; dmalloc API manual page</h1>
 
     <table class="sec-table">
     <tr>
@@ -36,7 +36,8 @@
     </table>
 
 <pre>
-<span class="headline"><i>darenainit</i>()                   dmalloc API manual                   <i>darenainit</i>()</span>
+<span class="headline"><i>darenainit</i>                dmalloc API functions manual                <i>darenainit</i></span>
+
 </pre>
 
 <h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
@@ -83,15 +84,21 @@
 <h2><a id="NOTES" href="#NOTES"></a>NOTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
         Trying to initialize an arena more than once is considered unsafe. It
         can still be done in single-threaded applications, because the critical 
-        step of arena initialization is dealing with mutexes, but it does become
-        source of undefined behaviour in multi-threaded ones. 
+        step of arena initialization deals with mutexes, but it does become
+        source of undefined behaviour in multi-threaded applications.
         
-        However, note that after initialization, any arena is safe to be used in
-        a multi-threaded context with all of the other allocator functions.
+        Initalizing an arena more that once both includes multiple calls to
+        <b>darenainit</b>() on the same backing memory in the same thread and
+        sigle calls to such function by different thread at possibly the same
+        time.
+        
+        In any case, note that, after initialization, any arena is safe to be 
+        used in a multi-threaded context with all of the other allocator
+        functions.
 </pre>
 
 <pre>
-<span class="footline">dmalloc API manual                 2026-04-08                       <i>darenainit</i>()</span>
+<span class="footline">dmalloc API functions manual       2026-04-13                         <i>darenainit</i></span>
 </pre>
 
 <hr/>

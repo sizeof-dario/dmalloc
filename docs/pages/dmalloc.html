@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>dmalloc() - dmalloc API manual</title>
+    <title>dmalloc - dmalloc API manual page</title>
     <link rel=stylesheet href="../styles/base_style.css"/>
     <link rel=stylesheet href="../styles/page_style.css"/>
 </head>
@@ -13,7 +13,7 @@
 
     <div class="nav-bar">
         <p class = "nav-text">
-        dmalloc API manual > <a href="../index.html">index</a> > <a href="dmalloc.html">dmalloc()</a>
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="dmalloc.html">dmalloc</a>
         </p>
     </div>
     <hr class="nav-end"/>
@@ -23,7 +23,7 @@
 
 
 
-    <h1>dmalloc() &mdash; dmalloc API manual</h1>
+    <h1>dmalloc &mdash; dmalloc API manualp page</h1>
 
     <table class="sec-table">
     <tr>
@@ -36,7 +36,7 @@
     </table>
 
 <pre>
-<span class="headline"><i>dmalloc</i>()                      dmalloc API manual                      <i>dmalloc</i>()</span>
+<span class="headline"><i>dmalloc</i>                   dmalloc API functions manual                   <i>dmalloc</i></span>
 </pre>
 
 <h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
@@ -80,7 +80,7 @@
         ┌────────────────────────────────────┬───────────────┬───────────┐
         │ <b>Interface</b>                          │ <b>Attribute</b>     │ <b>Value</b>     │
         ├────────────────────────────────────┼───────────────┼───────────┤
-        │ <b>arenainit</b>()                        │ Thread safety │ MT-Safe   │
+        │ <b>dmalloc</b>()                          │ Thread safety │ MT-Safe   │
         └────────────────────────────────────┴───────────────┴───────────┘
 </pre>
 
@@ -92,8 +92,8 @@
 
 <h2><a id="EXAMPLES" href="#EXAMPLES"></a>EXAMPLES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
         #include "dmalloc.h"
-        #include &lt;stdio.h&gt; // For perror() and printf().
-        #include &lt;stdlib.h&gt; // For exit() and the EXIT_* macros.
+        #include &lt;stdio.h&gt;  /* For perror() and printf(). */
+        #include &lt;stdlib.h&gt; /* For exit() and the EXIT_* macros. */
 
         #define CAPACITY 1024
 
@@ -101,7 +101,7 @@
         {
             char arena[CAPACITY];
 
-            // The arena must be initialized first.
+            /* The arena must be initialized first. */
             if(darenainit(arena, CAPACITY) < 0)
             {
                 perror("darenainit");
@@ -134,7 +134,7 @@
 </pre>
 
 <pre>
-<span class="footline">dmalloc API manual                 2026-04-08                          <i>dmalloc</i>()</span>
+<span class="footline">dmalloc API functions manual       2026-04-13                            <i>dmalloc</i></span>
 </pre>
 
 <hr/>

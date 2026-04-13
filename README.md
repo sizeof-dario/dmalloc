@@ -42,4 +42,4 @@ The **dmalloc** folder contains the master header **include/dmalloc.h**. That's 
 
 ## How to use the library
 
-You can find a detailed explanation of how the library works and the necessary code documentation at https://sizeof-dario.github.io/dmalloc/.
+You can find all the necessary code documentation at https://sizeof-dario.github.io/dmalloc/.
