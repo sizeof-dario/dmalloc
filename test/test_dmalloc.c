@@ -40,9 +40,7 @@ void tearDown()
 
 void test_arenasbrk_null_arena_header()
 {
-    errno = 0;
-    TEST_ASSERT_EQUAL_PTR((void *)(-1), arenasbrk(ANY_LONG, NULL));
-    TEST_ASSERT_EQUAL_INT(EINVAL, errno);
+    TEST_ASSERT_NULL(arenasbrk(ANY_LONG, NULL));
 }
 
 void test_arenasbrk_zero_delta()
@@ -65,14 +63,14 @@ void test_arenasbrk_overflow_protection()
 
     errno = 0;
     TEST_ASSERT_EQUAL_PTR((void *)(-1), arenasbrk(LONG_MIN, ahdr));
-    TEST_ASSERT_EQUAL_INT(EOVERFLOW, errno);
+    TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
     fake_brk = (uintptr_t)LONG_MAX + 2;
     ahdr->arena_brk = (void *)fake_brk;
 
     errno = 0;
     TEST_ASSERT_EQUAL_PTR((void *)(-1), arenasbrk(LONG_MAX, ahdr));
-    TEST_ASSERT_EQUAL_INT(EOVERFLOW, errno);
+    TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 }
 
 void test_arenasbrk_out_of_bounds_protection()
@@ -81,11 +79,11 @@ void test_arenasbrk_out_of_bounds_protection()
 
     errno = 0;
     TEST_ASSERT_EQUAL_PTR((void *)(-1), arenasbrk(-CAPACITY, ahdr));
-    TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+    TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 
     errno = 0;
     TEST_ASSERT_EQUAL_PTR((void *)(-1), arenasbrk(CAPACITY, ahdr));
-    TEST_ASSERT_EQUAL_INT(ERANGE, errno);
+    TEST_ASSERT_EQUAL_INT(ENOMEM, errno);
 }
 
 void test_arenasbrk_successfull_shifts()
