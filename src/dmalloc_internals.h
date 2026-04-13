@@ -1,14 +1,13 @@
-/******************************************************************************
-    
-        dmalloc hybrid arena allocator.
+/*
+*       dmalloc allocator.
+*
+*   Project repository at https://github.com/sizeof-dario/dmalloc.git.
+*
+*   You can read the documentation at https://sizeof-dario.github.io/dmalloc/.
+*
+*******************************************************************************/
 
-    Project repo at https://github.com/sizeof-dario/dmalloc.git.
-
-******************************************************************************/
-
-/*  "dmalloc_internals.h"
-
-    Contains internal definitions for the allocator.                         */
+/*      "dmalloc_internals.h"                                                 */
 
 #ifndef DMALLOC_INTERNALS_H
 #define DMALLOC_INTERNALS_H 1
@@ -26,14 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 
-/*  General purpose macros. */
-
-#define UNUSED(param) (void)(param)
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-
-/*  *********************** */
-
-
+/*  Headers. *******************************************************************/
 
 typedef struct blockheader
 {
@@ -43,47 +35,71 @@ typedef struct blockheader
     struct blockheader *bhdr_next;
 } blockheader;
 
-
-
 typedef struct arenaheader
 {
     pthread_mutex_t     lock;
     void               *arena_start;
     void               *arena_brk;
     void               *arena_end;
-    blockheader        *bhdr_first;
     void             *(*brkshifter)(intptr_t, struct arenaheader *);
+    blockheader        *bhdr_first;
 } arenaheader;
 
-
-
-void *arenasbrk(intptr_t delta, arenaheader *ahdr);
-
-int meminit(void *backing_memory, size_t capacity);
-
-void do_split(blockheader *bhdr, size_t bhdr_payload_size);
-
-void *dmalloc_unlocked(size_t size, arenaheader *ahdr);
-
-blockheader *do_coalesce_right(blockheader *bhdr);
-
-void dfree_unlocked(void *p, arenaheader *ahdr);
+/*  ***************************************************************************/
 
 
 
-#define ALIGN(val)  \
-    (((val) + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1))
+/*  Allocator macros. *********************************************************/
+
+#define ALIGN(x) (((x) + alignof(max_align_t)-1) & ~(alignof(max_align_t)-1))
 
 #define AL_ARENAHDR_SIZE ALIGN(sizeof(arenaheader))
-
 #define AL_BLOCKHDR_SIZE ALIGN(sizeof(blockheader))
 
-#define GET_ARENAHDR(ptr) (arenaheader *)ALIGN((uintptr_t)ptr)
+#define MIN_BLOCK_SIZE (AL_BLOCKHDR_SIZE + ALIGN(1))
 
-#define GET_BLOCKHDR(ptr) (blockheader *)((uintptr_t)ptr - AL_BLOCKHDR_SIZE)
+#define GET_ARENAHDR(p) (arenaheader *)ALIGN((uintptr_t)(p))
+#define GET_BLOCKHDR(p) (blockheader *)((uintptr_t)(p) - AL_BLOCKHDR_SIZE)
 
-#define MIN_BLOCK_SIZE (AL_BLOCKHDR_SIZE + ALIGN(sizeof(char)))
+/*  ***************************************************************************/
 
 
+
+/*  Allocator internal functions. *********************************************/
+
+/*  Shifts by `delta` bytes the break of the arena whose header is pointed to by
+    `ahdr`. */
+void *arenasbrk(intptr_t delta, arenaheader *ahdr);
+
+
+
+/*  Initializes the memory region pointed to by `backing_memory` and of size
+    `capacity`. If `backing_memory` is NULL, the heap is initialized. */
+int backingmemoryinit(void *backing_memory, size_t capacity);
+
+
+
+/*  Performs block spliting on the block whose header is pointed to by `bhdr`.
+    `size` determines how much space must remain in the block that is split.
+    No check is done about if block splitting can happen. */
+void do_split(blockheader *bhdr, size_t size);
+
+
+
+/*  Allocates `size` bytes of memory on the arena whose header is pointed to by
+    `ahdr` or on the heap if `ahdr` is NULL. It's not thread-safe. */
+void *dmalloc_unlocked(size_t size, arenaheader *ahdr);
+
+
+
+/*  Performs block coalescing on the right on the block whose header is pointed
+    to by `bhdr`. No check is done about if block coalescing can happen. */
+blockheader *do_coalesce_right(blockheader *bhdr);
+
+
+
+/*  Frees memory pointed to by `p` fro, the arena whose header is pointed to by
+    `ahdr`. If `ahdr` is NULL, memory is freed from the heap. */
+void dfree_unlocked(void *p, arenaheader *ahdr);
 
 #endif /* DMALLOC_INTERNALS_H */

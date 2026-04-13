@@ -1,65 +1,78 @@
-/******************************************************************************
-    
-        dmalloc hybrid arena allocator.
+/*
+*       dmalloc allocator.
+*
+*   Project repository at https://github.com/sizeof-dario/dmalloc.git.
+*
+*   You can read the documentation at https://sizeof-dario.github.io/dmalloc/.
+*
+*******************************************************************************/
 
-    Project repo at https://github.com/sizeof-dario/dmalloc.git.
-
-******************************************************************************/
+/*      "dmalloc.c" - Implementation file.                                    */
 
 #include "dmalloc_internals.h"
 #include "dmalloc.h"
 
+/*  Global variables. *********************************************************/
+
 static pthread_mutex_t heapinit_lock = PTHREAD_MUTEX_INITIALIZER;
 static void *heap_start = NULL;
 
-/* Utility functions. *******************************************************/
+/*  ***************************************************************************/
 
-static inline void* sbrk_wrap(intptr_t delta, arenaheader *dummy)
+
+
+/*  Break shifters. ***********************************************************/
+
+static inline void* sbrk_wrap(intptr_t delta, arenaheader *unused)
 {
-    UNUSED(dummy);
+    (void)(unused);
     return sbrk(delta);
 }
+
 
 
 void *arenasbrk(intptr_t delta, arenaheader *ahdr)
 {
     if(ahdr == NULL)
     {
-        errno = EINVAL;
-        return (void *)(-1);
+        return NULL;
     }
-
-    uintptr_t old_brk = (uintptr_t)ahdr->arena_brk;
 
     if(delta == 0)
     {
-        return (void *)old_brk;
+        return ahdr->arena_brk;
     }
 
-    uintptr_t new_brk = delta > 0 
-                    ? old_brk + (uintptr_t)( delta) 
-                    : old_brk - (uintptr_t)(-delta);
 
-    if (delta > 0 ? new_brk <= old_brk : new_brk >= old_brk)
+
+    uintptr_t old_brk = (uintptr_t)ahdr->arena_brk;
+    uintptr_t new_brk = delta > 0 ? old_brk + (uintptr_t)( delta)
+                                  : old_brk - (uintptr_t)(-delta);
+
+    if(delta > 0 ? new_brk <= old_brk : new_brk >= old_brk)
     {
-        errno = EOVERFLOW;
+        errno = ENOMEM;
         return (void *)(-1);
     }
 
     if(new_brk < (uintptr_t)ahdr->arena_start 
     || new_brk > (uintptr_t)ahdr->arena_end)
     {
-        errno = ERANGE;
+        errno = ENOMEM;
         return (void *)(-1);
     }
 
     ahdr->arena_brk = (void *)new_brk;
-
     return (void *)old_brk;
 }
 
+/*  ***************************************************************************/
 
-int meminit(void *backing_memory, size_t capacity)
+
+
+/*  Initializers and destroier. ***********************************************/
+
+int backingmemoryinit(void *backing_memory, size_t capacity)
 {
     void *(*brkshifter)(intptr_t, arenaheader *) = arenasbrk;
     
@@ -96,17 +109,19 @@ int meminit(void *backing_memory, size_t capacity)
     ahdr->arena_start = (void *)((uintptr_t)ahdr + AL_ARENAHDR_SIZE);
     ahdr->arena_brk = ahdr->arena_start;
     ahdr->arena_end = (void *)((uintptr_t)ahdr->arena_start + capacity);
-    ahdr->bhdr_first = NULL;
     ahdr->brkshifter = brkshifter;
+    ahdr->bhdr_first = NULL;
 
     return 0;
 }
 
 
+
 static inline int heapinit()
 {
-    return meminit(NULL, SIZE_MAX);
+    return backingmemoryinit(NULL, SIZE_MAX);
 }
+
 
 
 int darenainit(void *backing_memory, size_t capacity)
@@ -116,11 +131,12 @@ int darenainit(void *backing_memory, size_t capacity)
         return 0;
     }
 
-    return meminit(backing_memory, capacity);
+    return backingmemoryinit(backing_memory, capacity);
 }
 
 
-int darenadestroy(void *arena)
+
+int darenadestroy(darena_t *arena)
 {
     if(arena == NULL)
     {
@@ -141,38 +157,17 @@ int darenadestroy(void *arena)
     ahdr->arena_start = NULL;
     ahdr->arena_brk   = NULL;
     ahdr->arena_end   = NULL;
-    ahdr->bhdr_first  = NULL;
     ahdr->brkshifter  = NULL;
+    ahdr->bhdr_first  = NULL;
 
     return 0;
 }
 
-
-static inline int ensure_heap()
-{
-    if(heap_start == NULL)
-    {
-        pthread_mutex_lock(&heapinit_lock);
-        if(heap_start == NULL)
-        {
-            if(heapinit() < 0)
-            {
-                errno = ENOMEM;
-                pthread_mutex_unlock(&heapinit_lock);
-                return -1;
-            }
-        }
-        pthread_mutex_unlock(&heapinit_lock);
-    }
-    return 0;
-}
-
-
-/* **************************************************************************/
+/*  ***************************************************************************/
 
 
 
-/* dmalloc() ****************************************************************/
+/*  dmalloc(). ****************************************************************/
 
 void do_split(blockheader *bhdr, size_t bhdr_payload_size)
 {
@@ -214,17 +209,15 @@ void do_split(blockheader *bhdr, size_t bhdr_payload_size)
 }
 
 
+
 static inline void try_split(blockheader *bhdr, size_t bhdr_payload_size)
 {
-    /*  If the space we need is small enough for a non-degenerate block to fit
-        in what's left of the free block after the allocation, we can perform
-        block splitting. */
-
     if((bhdr->payload_size - bhdr_payload_size) >= MIN_BLOCK_SIZE)
     {
         do_split(bhdr, bhdr_payload_size);
     }
 }
+
 
 
 void *dmalloc_unlocked(size_t size, arenaheader *ahdr)
@@ -278,12 +271,34 @@ void *dmalloc_unlocked(size_t size, arenaheader *ahdr)
         {
             p->bhdr_prev->bhdr_next = p;
         }
-
+        
         return (void *)((uintptr_t)p + AL_BLOCKHDR_SIZE);
 }
 
 
-void *dmalloc(size_t size, void *arena)
+
+static inline int ensure_heap()
+{
+    if(heap_start == NULL)
+    {
+        pthread_mutex_lock(&heapinit_lock);
+        if(heap_start == NULL)
+        {
+            if(heapinit() < 0)
+            {
+                errno = ENOMEM;
+                pthread_mutex_unlock(&heapinit_lock);
+                return -1;
+            }
+        }
+        pthread_mutex_unlock(&heapinit_lock);
+    }
+    return 0;
+}
+
+
+
+void *dmalloc(size_t size, darena_t *arena)
 {
     if(arena == NULL)
     {
@@ -304,12 +319,11 @@ void *dmalloc(size_t size, void *arena)
     return p;
 }
 
-/*  **************************************************************************/
+/*  ***************************************************************************/
 
 
 
-
-/* dfree() *******************************************************************/
+/*  dfree(). ******************************************************************/
 
 blockheader *do_coalesce_right(blockheader *bhdr)
 {
@@ -332,6 +346,7 @@ blockheader *do_coalesce_right(blockheader *bhdr)
 }
 
 
+
 static inline blockheader *try_coalesce(blockheader *bhdr)
 {
     while(bhdr->bhdr_next != NULL && bhdr->bhdr_next->is_free)
@@ -346,6 +361,7 @@ static inline blockheader *try_coalesce(blockheader *bhdr)
 
     return bhdr;
 }
+
 
 
 void dfree_unlocked(void *p, arenaheader *ahdr)
@@ -383,7 +399,8 @@ void dfree_unlocked(void *p, arenaheader *ahdr)
 }
 
 
-void dfree(void *p, void *arena)
+
+void dfree(void *p, darena_t *arena)
 {
     if(p == NULL)
     {
@@ -413,7 +430,7 @@ void dfree(void *p, void *arena)
 
 /*  Other allocator functions. ************************************************/
 
-void *dcalloc(size_t n, size_t size, void *arena)
+void *dcalloc(size_t n, size_t size, darena_t *arena)
 {
     if(size != 0 && n > SIZE_MAX / size)
     {
@@ -432,7 +449,8 @@ void *dcalloc(size_t n, size_t size, void *arena)
 }
 
 
-void *drealloc(void *p, size_t size, void *dest, void *src)
+
+void *drealloc(void *p, size_t size, darena_t *dest, darena_t *src)
 {
 
     if(p == NULL)
@@ -495,7 +513,8 @@ void *drealloc(void *p, size_t size, void *dest, void *src)
         }
         else
         {
-            memcpy(p_new, p, MIN(size, bhdr_p->payload_size));
+            size_t min_size = size < bhdr_p->payload_size ? size : bhdr_p->payload_size;
+            memcpy(p_new, p, min_size);
             dfree_unlocked(p, src_hdr);
         }
 
@@ -609,7 +628,9 @@ void *drealloc(void *p, size_t size, void *dest, void *src)
 }
 
 
-void *dreallocarray(void *p, size_t n, size_t size, void *dest, void *src)
+
+void *dreallocarray(void *p, size_t n, size_t size, darena_t *dest, 
+                    darena_t *src)
 {
     if(size != 0 && n > SIZE_MAX / size)
     {

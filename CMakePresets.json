@@ -1,0 +1,31 @@
+{
+    "version": 8,
+    "configurePresets":
+    [
+        {
+            "name": "static",
+            "cacheVariables":
+            {
+                "BUILD_SHARED_LIBS": "OFF"
+            }
+        },
+        {
+            "name": "shared",
+            "cacheVariables":
+            {
+                "BUILD_SHARED_LIBS": "ON"
+            }
+        },
+        {
+            "name": "test",
+            "inherits":
+            [
+                "shared"
+            ],
+            "cacheVariables":
+            {
+                "ENABLE_TESTING": "ON"
+            }     
+        }
+    ]
+}
