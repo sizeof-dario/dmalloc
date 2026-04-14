@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.28)
 project(dmalloc C)
 
 set(DMALLOC_SOURCES 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_alloc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_arenas.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_libc_wrappers.c
 )
 
@@ -29,7 +30,9 @@ endif()
 target_sources(dmalloc
     PRIVATE
         ${DMALLOC_SOURCES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_internals.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_alloc.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_arenas.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_defs.h
 
     PUBLIC
     FILE_SET HEADERS

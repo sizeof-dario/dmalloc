@@ -8,7 +8,9 @@
 
 #include <stdlib.h>
 #include "unity.h"
-#include "dmalloc_internals.h"
+#include "dmalloc_alloc.h"
+#include "dmalloc_arenas.h"
+#include "dmalloc_defs.h"
 #include "dmalloc.h"
 
 #define ANY_LONG 1825
