@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>dreallocarray - dmalloc API manual page</title>
+    <link rel=stylesheet href="../styles/base_style.css"/>
+    <link rel=stylesheet href="../styles/page_style.css"/>
+</head>
+
+<body>
+    <div class="page-top"><a id="top_of_page"></a></div>
+
+    <div class="nav-bar">
+        <p class = "nav-text">
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="dreallocarray.html">dreallocarray</a>
+        </p>
+    </div>
+    <hr class="nav-end"/>
+
+
+
+
+
+
+    <h1>dreallocarray &mdash; dmalloc API manualp page</h1>
+
+    <table class="sec-table">
+    <tr>
+        <td>
+            <p class="section-dir">
+                <a href="#NAME">NAME</a> | <a href="#SYNOPSIS">SYNOPSIS</a> | <a href="#DESCRIPTION">DESCRIPTION</a> | <a href="#RETURN_VALUE">RETURN&nbsp;VALUE</a> | <a href="#ERRORS">ERRORS</a> | <a href="#ATTRIBUTES">ATTRIBUTES</a> | <a href="#STANDARDS">STANDARDS</a>
+            </p>
+        </td>
+    </tr>
+    </table>
+
+<pre>
+<span class="headline"><i>dreallocarray</i>             dmalloc API functions manual             <i>dreallocarray</i></span>
+</pre>
+
+<h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
+<pre>
+        dreallocarray - reallocates memory.
+</pre>
+
+<h2><a id="SYNOPSIS" href="#SYNOPSIS"></a>SYNOPSIS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+
+        <b>#include "dmalloc.h"</b>
+
+        <b>void *dreallocarray(void *</b><i>p</i><b>, size_t </b><i>n</i><b>, size_t </b><i>size</i><b>, darena_t *</b><i>dest</i><b>, 
+                            darena_t *</b><i>src</i><b>);</b>
+</pre>
+
+<h2><a id="DESCRIPTION" href="#DESCRIPTION"></a>DESCRIPTION  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        The function <b>dreallocarray</b>() reallocates the memory pointed to by <i>p</i> from
+        <i>src</i> to a block in <i>dest</i> that is big enough for <i>n</i> objects of size <i>size</i>.
+        Both <i>src</i> and <i>dest</i> can be NULL for the memory being reallocated,
+        respectively, from or on the heap.
+        
+        It is equivalent to the call <b>drealloc</b>(<i>p</i>, <i>n</i> * <i>size</i>);
+
+        However, unlike that <b>drealloc</b>() call, <b>dreallocarray</b>() fails safely in
+        the case where the multiplication would overflow. If such an overflow
+        occurs, <b>dreallocarray</b>() returns an error.
+</pre>
+        
+<h2><a id="RETURN_VALUE" href="#RETURN_VALUE"></a>RETURN VALUE  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        On success, <b>drellocarray</b>() returns a pointer to the reallocated memory.
+        On failure, it returns NULL and sets <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.
+</pre>
+
+<h2><a id="ERRORS" href="#ERRORS"></a>ERRORS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        <b>ENOMEM</b>  Out of memory. <b>dreallocarray</b>() may have failed for a handful of
+                reasons. Possibly, reallocation to a bigger block was attempled,
+                and <i>dest</i> was an arena with not enough available space left, or
+                the multiplication of <i>n</i> and <i>size</i> would result in integer
+                overflow.
+                
+                Otherwise, for the case of a reallocation to the heap, the 
+                function failed because the heap was full or because an error
+                occurred while the heap was being initialized.       
+</pre>
+
+<h2><a id="ATTRIBUTES" href="#ATTRIBUTES"></a>ATTRIBUTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        For an explanation of the terms used in this section, see <a href="https://man7.org/linux/man-pages/man7/attributes.7.html">attributes(7)</a>.
+        ┌────────────────────────────────────┬───────────────┬───────────┐
+        │ <b>Interface</b>                          │ <b>Attribute</b>     │ <b>Value</b>     │
+        ├────────────────────────────────────┼───────────────┼───────────┤
+        │ <b>dreallocarray</b>()                    │ Thread safety │ MT-Safe   │
+        └────────────────────────────────────┴───────────────┴───────────┘
+</pre>
+
+<h2><a id="STANDARDS" href="#STANDARDS"></a>STANDARDS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        None.
+</pre>
+
+<pre>
+<span class="footline">dmalloc API functions manual       2026-04-13                      <i>dreallocarray</i></span>
+</pre>
+
+<hr/>
+
+    <hr class = "start-footer"/>
+        <div class = "footer">
+            <p>
+                2026 <a href = "https://github.com/sizeof-dario"><b style="color: revert;">malloc</b> sizeof-dario</a>
+            </p>
+        </div>
+    <hr class = "end-footer"/>
+</body>
+</html>

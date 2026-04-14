@@ -1,5 +1,5 @@
 /*
-*       dmalloc allocator.
+*       dmalloc
 *
 *   Project repository at https://github.com/sizeof-dario/dmalloc.git.
 *

@@ -1,5 +1,5 @@
 /*
-*       dmalloc allocator.
+*       dmalloc
 *
 *   Project repository at https://github.com/sizeof-dario/dmalloc.git.
 *
@@ -15,8 +15,6 @@
 #define DMALLOC_H 1
 
 #include <stddef.h> /* For size_t. */
-
-
 
 typedef void darena_t;
 

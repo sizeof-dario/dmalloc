@@ -1,5 +1,5 @@
 /*
-*       dmalloc allocator.
+*       dmalloc
 *
 *   Project repository at https://github.com/sizeof-dario/dmalloc.git.
 *
@@ -10,6 +10,7 @@
 /*      "dmalloc_libc_wrappers.c"                                             */
 
 #include "dmalloc.h"
+#include <unistd.h>
 
 void *malloc(size_t size)
 {

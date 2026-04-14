@@ -6,14 +6,16 @@
             "name": "static",
             "cacheVariables":
             {
-                "BUILD_SHARED_LIBS": "OFF"
+                "BUILD_SHARED_LIBS": "OFF",
+                "ENABLE_TESTING": "OFF"
             }
         },
         {
             "name": "shared",
             "cacheVariables":
             {
-                "BUILD_SHARED_LIBS": "ON"
+                "BUILD_SHARED_LIBS": "ON",
+                "ENABLE_TESTING": "OFF"
             }
         },
         {

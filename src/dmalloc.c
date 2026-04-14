@@ -1,5 +1,5 @@
 /*
-*       dmalloc allocator.
+*       dmalloc
 *
 *   Project repository at https://github.com/sizeof-dario/dmalloc.git.
 *
@@ -275,7 +275,7 @@ void *dmalloc_unlocked(size_t size, arenaheader *ahdr)
         return (void *)((uintptr_t)p + AL_BLOCKHDR_SIZE);
 }
 
-
+inline
 
 static inline int ensure_heap()
 {

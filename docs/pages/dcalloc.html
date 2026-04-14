@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>dcalloc - dmalloc API manual page</title>
+    <link rel=stylesheet href="../styles/base_style.css"/>
+    <link rel=stylesheet href="../styles/page_style.css"/>
+</head>
+
+<body>
+    <div class="page-top"><a id="top_of_page"></a></div>
+
+    <div class="nav-bar">
+        <p class = "nav-text">
+        dmalloc API manual > <a href="../index.html">index</a> > <a href="dcalloc.html">dcalloc</a>
+        </p>
+    </div>
+    <hr class="nav-end"/>
+
+
+
+
+
+
+    <h1>dcalloc &mdash; dmalloc API manualp page</h1>
+
+    <table class="sec-table">
+    <tr>
+        <td>
+            <p class="section-dir">
+                <a href="#NAME">NAME</a> | <a href="#SYNOPSIS">SYNOPSIS</a> | <a href="#DESCRIPTION">DESCRIPTION</a> | <a href="#RETURN_VALUE">RETURN&nbsp;VALUE</a> | <a href="#ERRORS">ERRORS</a> | <a href="#ATTRIBUTES">ATTRIBUTES</a> | <a href="#STANDARDS">STANDARDS</a>
+            </p>
+        </td>
+    </tr>
+    </table>
+
+<pre>
+<span class="headline"><i>dcalloc</i>                   dmalloc API functions manual                   <i>dcalloc</i></span>
+</pre>
+
+<h2><a id="NAME" href="#NAME"></a>NAME  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2>
+<pre>
+        dcalloc - allocates and initializes memory.
+</pre>
+
+<h2><a id="SYNOPSIS" href="#SYNOPSIS"></a>SYNOPSIS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+
+        <b>#include "dmalloc.h"</b>
+
+        <b>void *dcalloc(size_t</b> <i>n</i><b>, size_t</b> <i>size</i><b>, darena_t *</b><i>arena</i><b>);</b>
+</pre>
+
+<h2><a id="DESCRIPTION" href="#DESCRIPTION"></a>DESCRIPTION  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        The function <b>dcalloc</b>() allocates memory for <i>n</i> objects of size <i>size</i> in
+        the arena pointed to by <i>arena</i> and initializes it to 0. If <i>arena</i> is NULL,
+        the memory is allocated on the heap. If the multiplication of <i>n</i> and <i>size</i>
+        would result in integer overflow, then <b>dcalloc</b>() returns an error. If
+        <i>size</i> is 0, then <b>dcalloc</b>() returns a unique pointer value that can later
+        be successfully passed to <b>dfree</b>(). When non-NULL, <i>arena</i> must be
+        initialized by <b>darenainit</b>() before being passed to <b>dcalloc</b>(). Not doing
+        so results in undefined behaviour.
+</pre>
+
+<h2><a id="RETURN_VALUE" href="#RETURN_VALUE"></a>RETURN VALUE  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        On success, <b>dcalloc</b>() returns a pointer to the allocated memory. On
+        failure, it returns NULL and sets <a href="https://man7.org/linux/man-pages/man3/errno.3.html">errno</a>.
+</pre>
+
+<h2><a id="ERRORS" href="#ERRORS"></a>ERRORS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        <b>ENOMEM</b>  Out of memory. <b>dcalloc</b>() may have failed because the 
+                multiplication of <i>n</i> and <i>size</i> would result in integer overflow,
+                or because an arena allocation in an arena with not enough 
+                available space was attempted. Otherwise, for the case of a heap
+                allocation, the function failed because the heap was full or 
+                because an error occurred while the heap was being initialized.
+</pre>
+
+<h2><a id="ATTRIBUTES" href="#ATTRIBUTES"></a>ATTRIBUTES  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        For an explanation of the terms used in this section, see <a href="https://man7.org/linux/man-pages/man7/attributes.7.html">attributes(7)</a>.
+        ┌────────────────────────────────────┬───────────────┬───────────┐
+        │ <b>Interface</b>                          │ <b>Attribute</b>     │ <b>Value</b>     │
+        ├────────────────────────────────────┼───────────────┼───────────┤
+        │ <b>dcalloc</b>()                          │ Thread safety │ MT-Safe   │
+        └────────────────────────────────────┴───────────────┴───────────┘
+</pre>
+
+<h2><a id="STANDARDS" href="#STANDARDS"></a>STANDARDS  &nbsp; &nbsp; &nbsp; &nbsp; <a href="#top_of_page"><span class="top-link">top</span></a></h2><pre>
+        <b>dcalloc</b>() is supposed to behave like <b>calloc</b>() when dealing with the
+        heap. For this reason, it follows the <a href="https://man7.org/linux/man-pages/man3/calloc.3p.html">POSIX standard</a> on top of the <a href="https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3220.pdf#subsubsection.7.24.3.2">
+        ISO/IEC 9899:2024 §7.24.3.2</a> C standard.
+</pre>
+
+<pre>
+<span class="footline">dmalloc API functions manual       2026-04-13                            <i>dcalloc</i></span>
+</pre>
+
+<hr/>
+
+    <hr class = "start-footer"/>
+        <div class = "footer">
+            <p>
+                2026 <a href = "https://github.com/sizeof-dario"><b style="color: revert;">malloc</b> sizeof-dario</a>
+            </p>
+        </div>
+    <hr class = "end-footer"/>
+</body>
+</html>
