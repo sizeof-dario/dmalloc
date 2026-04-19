@@ -1,25 +1,24 @@
-/*
-*       dmalloc
-*
-*   Project repository at https://github.com/sizeof-dario/dmalloc.git.
-*
-*   You can read the documentation at https://sizeof-dario.github.io/dmalloc/.
-*
-*******************************************************************************/
+/*  dmalloc - A didactic memory allocator for UNIX systems.
 
-/*      "dmalloc_arenas.c"                                                    */
+Project repository at https://github.com/sizeof-dario/dmalloc.git.
+Documentation is avaiable at https://sizeof-dario.github.io/dmalloc/. 
+
+Latest change on date 2026-04-15. */
+
+/**
+ *  IMplementations of arenas-related functions "dmalloc_arenas.c".
+ */
 
 #include "dmalloc_arenas.h"
 
 pthread_mutex_t heapinit_lock = PTHREAD_MUTEX_INITIALIZER;
 void *heap_start = NULL;
 
-void* sbrk_wrap(intptr_t delta, arenaheader *unused)
+void* heapsbrk(intptr_t delta, arenaheader *unused)
 {
     (void)(unused);
     return sbrk(delta);
 }
-
 
 void *arenasbrk(intptr_t delta, arenaheader *ahdr)
 {
@@ -32,8 +31,6 @@ void *arenasbrk(intptr_t delta, arenaheader *ahdr)
     {
         return ahdr->arena_brk;
     }
-
-
 
     uintptr_t old_brk = (uintptr_t)ahdr->arena_brk;
     uintptr_t new_brk = delta > 0 ? old_brk + (uintptr_t)( delta)
@@ -56,8 +53,7 @@ void *arenasbrk(intptr_t delta, arenaheader *ahdr)
     return (void *)old_brk;
 }
 
-
-int backmeminit(void *backing_memory, size_t capacity)
+int bckminit(void *backing_memory, size_t capacity)
 {
     void *(*brkshifter)(intptr_t, arenaheader *) = arenasbrk;
     
@@ -66,7 +62,7 @@ int backmeminit(void *backing_memory, size_t capacity)
         heap_start = sbrk(0);
         backing_memory = heap_start;
         capacity = SIZE_MAX;
-        brkshifter = sbrk_wrap;
+        brkshifter = heapsbrk;
     }
 
     arenaheader *ahdr = GET_ARENAHDR(backing_memory);
@@ -106,14 +102,12 @@ int backmeminit(void *backing_memory, size_t capacity)
     return 0;
 }
 
-
-int heapinit()
+int heapinit_unlocked()
 {
-    return backmeminit(NULL, SIZE_MAX);
+    return bckminit(NULL, SIZE_MAX);
 }
 
-
-int ensureheap()
+int heapinit()
 {
     if(heap_start == NULL)
     {
@@ -126,7 +120,7 @@ int ensureheap()
 
         if(heap_start == NULL)
         {
-            if(heapinit() < 0)
+            if(heapinit_unlocked() < 0)
             {
                 retval = pthread_mutex_unlock(&heapinit_lock);
                 if(retval != 0)
@@ -147,8 +141,6 @@ int ensureheap()
     return 0;
 }
 
-/* vvv API functions vvv */
-
 int darenainit(void *backing_memory, size_t capacity)
 {
     if(backing_memory == NULL)
@@ -156,9 +148,8 @@ int darenainit(void *backing_memory, size_t capacity)
         return 0;
     }
 
-    return backmeminit(backing_memory, capacity);
+    return bckminit(backing_memory, capacity);
 }
-
 
 int darenadestroy(darena_t *arena)
 {

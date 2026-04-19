@@ -8,7 +8,7 @@
 
 #include <stdlib.h>
 #include "unity.h"
-#include "dmalloc_alloc.h"
+#include "dmalloc_core.h"
 #include "dmalloc_arenas.h"
 #include "dmalloc_defs.h"
 #include "dmalloc.h"

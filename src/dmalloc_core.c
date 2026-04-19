@@ -1,25 +1,26 @@
-/*
-*       dmalloc
-*
-*   Project repository at https://github.com/sizeof-dario/dmalloc.git.
-*
-*   You can read the documentation at https://sizeof-dario.github.io/dmalloc/.
-*
-*******************************************************************************/
+/*  dmalloc - A didactic memory allocator for UNIX systems.
 
-/*      "dmalloc_alloc.c"                                                     */
+Project repository at https://github.com/sizeof-dario/dmalloc.git.
+Documentation is avaiable at https://sizeof-dario.github.io/dmalloc/. 
+
+Latest change on date 2026-04-15. */
+
+/**
+ *  Implementation of allocator core functions "dmalloc_core.c".
+ */
+
 
 #include "dmalloc.h"
-#include "dmalloc_alloc.h"
+#include "dmalloc_core.h"
 #include "dmalloc_arenas.h"
 
-extern pthread_mutex_t heapinit_lock; /* Found in "dmalloc_arenas.c". */
-extern void           *heap_start;    /* Found in "dmalloc_arenas.c". */
+#ifdef DMALLOC_DEBUG
+ #include "dmalloc_debug.h"
+#endif
+
+extern void *heap_start; /* Found in "dmalloc_arenas.c". */
 
 
-
-
-/*  dmalloc(). ****************************************************************/
 
 void do_split(blockheader *bhdr, size_t bhdr_payload_size)
 {
@@ -60,8 +61,6 @@ void do_split(blockheader *bhdr, size_t bhdr_payload_size)
     /*  LCOV_EXCL_ STOP. */
 }
 
-
-
 void try_split(blockheader *bhdr, size_t bhdr_payload_size)
 {
     if((bhdr->payload_size - bhdr_payload_size) >= MIN_BLOCK_SIZE)
@@ -69,8 +68,6 @@ void try_split(blockheader *bhdr, size_t bhdr_payload_size)
         do_split(bhdr, bhdr_payload_size);
     }
 }
-
-
 
 void *dmalloc_unlocked(size_t size, arenaheader *ahdr)
 {
@@ -127,13 +124,11 @@ void *dmalloc_unlocked(size_t size, arenaheader *ahdr)
         return (void *)((uintptr_t)p + AL_BLOCKHDR_SIZE);
 }
 
-
-
 void *dmalloc(size_t size, darena_t *arena)
 {
     if(arena == NULL)
     {
-        if(ensureheap() < 0)
+        if(heapinit() < 0)
         {
             return NULL;
         }
@@ -150,11 +145,7 @@ void *dmalloc(size_t size, darena_t *arena)
     return p;
 }
 
-/*  ***************************************************************************/
 
-
-
-/*  dfree(). ******************************************************************/
 
 blockheader *do_coalesce_right(blockheader *bhdr)
 {
@@ -176,24 +167,20 @@ blockheader *do_coalesce_right(blockheader *bhdr)
     return bhdr;
 }
 
-
-
 blockheader *try_coalesce(blockheader *bhdr)
 {
-    while(bhdr->bhdr_next != NULL && bhdr->bhdr_next->is_free)
+    while(bhdr != NULL && bhdr->bhdr_next != NULL && bhdr->bhdr_next->is_free)
     {
         bhdr = do_coalesce_right(bhdr);
     }
 
-    while(bhdr->bhdr_prev != NULL && bhdr->bhdr_prev->is_free)
+    while(bhdr != NULL && bhdr->bhdr_prev != NULL && bhdr->bhdr_prev->is_free)
     {
         bhdr = do_coalesce_right(bhdr->bhdr_prev);
     }
 
     return bhdr;
 }
-
-
 
 void dfree_unlocked(void *p, arenaheader *ahdr)
 {
@@ -204,10 +191,30 @@ void dfree_unlocked(void *p, arenaheader *ahdr)
 
     blockheader *bhdr_p = GET_BLOCKHDR(p);
 
+
+
+    blockheader *bhdr_curr = ahdr->bhdr_first;
+
+    while(bhdr_curr != bhdr_p)
+    {
+        bhdr_curr = bhdr_curr->bhdr_next;
+        if(bhdr_curr == NULL)
+        {
+            /*  If we get into this branch, it means we found no valid match
+                for hdr, thus payload_ptr is invalid and we just silently 
+                return. */
+            return;
+        }
+    }
+
+
+
     if(bhdr_p->is_free)
     {
         return;
     }
+
+
 
     bhdr_p->is_free = 1;
 
@@ -229,10 +236,26 @@ void dfree_unlocked(void *p, arenaheader *ahdr)
     }     
 }
 
-
-
 void dfree(void *p, darena_t *arena)
 {
+    #ifdef DMALLOC_DEBUG
+    write(1, "dfree(p = ", 10);
+    char buf[30];
+    ultos((unsigned long)p, buf, 30, 16, 1);
+    write(1, buf, 30);
+  
+    if(p != NULL)
+    {
+    write(1, " - BLOCK HEADER address = ", 26);
+    ultos((unsigned long)GET_BLOCKHDR(p), buf, 30, 16, 1);
+    write(1, buf, 30);
+    }
+
+    write(1, ")\n\n", 3); 
+
+    arenadump((void *)arena);
+    #endif
+   
     if(p == NULL)
     {
         return;
@@ -255,11 +278,7 @@ void dfree(void *p, darena_t *arena)
     pthread_mutex_unlock(&ahdr->lock);
 }
 
-/*  ***************************************************************************/
 
-
-
-/*  Other allocator functions. ************************************************/
 
 void *dcalloc(size_t n, size_t size, darena_t *arena)
 {
@@ -278,8 +297,6 @@ void *dcalloc(size_t n, size_t size, darena_t *arena)
 
     return p;
 }
-
-
 
 void *drealloc(void *p, size_t size, darena_t *dest, darena_t *src)
 {
@@ -301,7 +318,7 @@ void *drealloc(void *p, size_t size, darena_t *dest, darena_t *src)
 
     if(dest == NULL)
     {
-        if(ensureheap() < 0)
+        if(heapinit() < 0)
         {
             return NULL;
         }
@@ -311,7 +328,7 @@ void *drealloc(void *p, size_t size, darena_t *dest, darena_t *src)
 
     if(src == NULL)
     {
-        if(ensureheap() < 0)
+        if(heapinit() < 0)
         {
             return NULL;
         }
@@ -458,8 +475,6 @@ void *drealloc(void *p, size_t size, darena_t *dest, darena_t *src)
     return p_new;
 }
 
-
-
 void *dreallocarray(void *p, size_t n, size_t size, darena_t *dest, 
                     darena_t *src)
 {
@@ -471,5 +486,3 @@ void *dreallocarray(void *p, size_t n, size_t size, darena_t *dest,
 
     return drealloc(p, n * size, dest, src);
 }
-
-/*  ***************************************************************************/

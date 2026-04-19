@@ -1,13 +1,13 @@
-/*
-*       dmalloc
-*
-*   Project repository at https://github.com/sizeof-dario/dmalloc.git.
-*
-*   You can read the documentation at https://sizeof-dario.github.io/dmalloc/.
-*
-*******************************************************************************/
+/*  dmalloc - A didactic memory allocator for UNIX systems.
 
-/*      "dmalloc_defs.h"                                                      */
+Project repository at https://github.com/sizeof-dario/dmalloc.git.
+Documentation is avaiable at https://sizeof-dario.github.io/dmalloc/. 
+
+Latest change on date 2026-04-14. */
+
+/**
+ *  Definitions of types and macros "dmalloc_defs.h".
+ */
 
 #ifndef DMALLOC_DEFS_H
 #define DMALLOC_DEFS_H 1

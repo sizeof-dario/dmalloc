@@ -3,10 +3,29 @@ cmake_minimum_required(VERSION 3.28)
 project(dmalloc C)
 
 set(DMALLOC_SOURCES 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_alloc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_arenas.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_libc_wrappers.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_core.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_libc_wrappers.c   
 )
+
+set(DMALLOC_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/headers/dmalloc_arenas.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/headers/dmalloc_core.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/headers/dmalloc_defs.h
+)
+
+if(DMALLOC_DEBUG)
+    set(DMALLOC_SOURCES
+        ${DMALLOC_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_debug.c
+    )
+    set(DMALLOC_HEADERS
+        ${DMALLOC_HEADERS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/headers/dmalloc_debug.h
+    )
+
+    add_compile_definitions(DMALLOC_DEBUG)
+endif()
 
 add_library(dmalloc)
 
@@ -30,12 +49,18 @@ endif()
 target_sources(dmalloc
     PRIVATE
         ${DMALLOC_SOURCES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_alloc.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_arenas.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/dmalloc_defs.h
+
+    PRIVATE
+    FILE_SET privateHeaders
+    TYPE HEADERS 
+    BASE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/headers
+    FILES
+        ${DMALLOC_HEADERS}
 
     PUBLIC
-    FILE_SET HEADERS
+    FILE_SET publicHeaders
+    TYPE HEADERS
     BASE_DIRS
       ${CMAKE_CURRENT_SOURCE_DIR}/include
     FILES
@@ -55,7 +80,7 @@ if(ENABLE_TESTING)
     target_include_directories(run_tests 
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/test/unity/src
-            ${CMAKE_CURRENT_SOURCE_DIR}/src
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/headers
     )
 
     target_link_libraries(run_tests dmalloc)

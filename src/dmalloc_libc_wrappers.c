@@ -1,15 +1,16 @@
-/*
-*       dmalloc
-*
-*   Project repository at https://github.com/sizeof-dario/dmalloc.git.
-*
-*   You can read the documentation at https://sizeof-dario.github.io/dmalloc/.
-*
-*******************************************************************************/
+/*  dmalloc - A didactic memory allocator for UNIX systems.
 
-/*      "dmalloc_libc_wrappers.c"                                             */
+Project repository at https://github.com/sizeof-dario/dmalloc.git.
+Documentation is avaiable at https://sizeof-dario.github.io/dmalloc/. 
+
+Latest change on date 2026-04-15. */
+
+/**
+ *  Function wrappers for libc malloc functions "dmalloc_libc_wrappers.c"
+ */
 
 #include "dmalloc.h"
+#include <sys/types.h>
 #include <unistd.h>
 
 void *malloc(size_t size)
